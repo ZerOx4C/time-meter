@@ -70,11 +70,11 @@ func (mw *MeterWindow) createWindowClass(hInstance winapi.HINSTANCE) winapi.WNDC
 func (mw *MeterWindow) createWindow(hInstance winapi.HINSTANCE, windowClass winapi.WNDCLASSEX) winapi.HWND {
 	windowTitlePtr, _ := syscall.UTF16PtrFromString("meter")
 	return winapi.CreateWindowEx(
-		winapi.WS_EX_OVERLAPPEDWINDOW,
+		winapi.WS_EX_NOACTIVATE,
 		windowClass.LpszClassName,
 		windowTitlePtr,
-		winapi.WS_OVERLAPPEDWINDOW,
-		winapi.CW_USEDEFAULT, winapi.CW_USEDEFAULT, winapi.CW_USEDEFAULT, winapi.CW_USEDEFAULT,
+		winapi.WS_POPUP,
+		0, 0, 0, 0,
 		0, 0, hInstance, nil)
 }
 
@@ -83,12 +83,12 @@ func (mw *MeterWindow) updateWindowLayout() {
 	winapi.SystemParametersInfo(winapi.SPI_GETWORKAREA, 0, unsafe.Pointer(&workarea), 0)
 	winapi.SetWindowPos(
 		mw.hWnd,
-		0,
+		winapi.HWND_TOPMOST,
 		workarea.Left,
 		workarea.Top,
 		50,
 		workarea.Bottom-workarea.Top,
-		winapi.SWP_NOACTIVATE|winapi.SWP_NOZORDER)
+		winapi.SWP_NOACTIVATE)
 }
 
 func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lParam uintptr) uintptr {
