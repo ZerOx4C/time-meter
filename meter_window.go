@@ -39,12 +39,6 @@ func (mw *MeterWindow) finalize() error {
 func (mw *MeterWindow) show() {
 	winapi.ShowWindow(mw.hWnd, winapi.SW_SHOW)
 	winapi.SetTimer(mw.hWnd, 1, 30, 0)
-
-	var msg winapi.MSG
-	for winapi.GetMessage(&msg, 0, 0, 0) != 0 {
-		winapi.TranslateMessage(&msg)
-		winapi.DispatchMessage(&msg)
-	}
 }
 
 func (mw *MeterWindow) createWindowClass(hInstance winapi.HINSTANCE) winapi.WNDCLASSEX {
