@@ -38,6 +38,7 @@ func (mw *MeterWindow) finalize() error {
 
 func (mw *MeterWindow) show() {
 	winapi.ShowWindow(mw.hWnd, winapi.SW_SHOW)
+	winapi.SetTimer(mw.hWnd, 1, 30, 0)
 
 	var msg winapi.MSG
 	for winapi.GetMessage(&msg, 0, 0, 0) != 0 {
@@ -77,8 +78,23 @@ func (mw *MeterWindow) createWindow(hInstance winapi.HINSTANCE, windowClass wina
 		0, 0, hInstance, nil)
 }
 
+func (mw *MeterWindow) updateWindowLayout() {
+	var workarea winapi.RECT
+	winapi.SystemParametersInfo(winapi.SPI_GETWORKAREA, 0, unsafe.Pointer(&workarea), 0)
+	winapi.SetWindowPos(
+		mw.hWnd,
+		0,
+		workarea.Left,
+		workarea.Top,
+		50,
+		workarea.Bottom-workarea.Top,
+		winapi.SWP_NOACTIVATE|winapi.SWP_NOZORDER)
+}
+
 func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lParam uintptr) uintptr {
 	switch msg {
+	case winapi.WM_TIMER:
+		mw.updateWindowLayout()
 	case winapi.WM_DESTROY:
 		winapi.PostQuitMessage(0)
 	default:
