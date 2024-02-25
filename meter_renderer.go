@@ -45,7 +45,7 @@ func (mr *MeterRenderer) draw() {
 func (mr *MeterRenderer) drawAllScaleLines(hdc winapi.HDC) {
 	offset := mr.futureDuration
 	totalDuration := mr.futureDuration + mr.pastDuration
-	totalMinutes := int32(totalDuration / time.Minute)
+	totalSeconds := int32(totalDuration / time.Second)
 
 	winapi.SelectObject(hdc, winapi.HGDIOBJ(mr.hourPen))
 
@@ -55,13 +55,13 @@ func (mr *MeterRenderer) drawAllScaleLines(hdc winapi.HDC) {
 
 	for offset < totalDuration {
 		if offset != mr.futureDuration {
-			mr.drawScaleLine(hdc, mr.height*int32(offset/time.Minute)/totalMinutes)
+			mr.drawScaleLine(hdc, mr.height*int32(offset/time.Second)/totalSeconds)
 		}
 		offset += time.Hour
 	}
 
 	winapi.SelectObject(hdc, winapi.HGDIOBJ(mr.headPen))
-	mr.drawScaleLine(hdc, mr.height*int32(mr.futureDuration/time.Minute)/totalMinutes)
+	mr.drawScaleLine(hdc, mr.height*int32(mr.futureDuration/time.Second)/totalSeconds)
 }
 
 func (mr *MeterRenderer) drawScaleLine(hdc winapi.HDC, y int32) {
