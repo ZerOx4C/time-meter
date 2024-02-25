@@ -13,6 +13,7 @@ type MeterWindow struct {
 	hInstance winapi.HINSTANCE
 	hWnd      winapi.HWND
 	renderer  *MeterRenderer
+	tasks     []Task
 	bound     winapi.RECT
 }
 
@@ -34,6 +35,7 @@ func (mw *MeterWindow) initialize() error {
 
 	mw.renderer = new(MeterRenderer)
 	mw.renderer.hWnd = hWnd
+	mw.renderer.tasks = mw.tasks
 	mw.renderer.futureDuration = time.Hour * 3
 	mw.renderer.pastDuration = time.Hour * 1
 
@@ -54,7 +56,7 @@ func (mw *MeterWindow) finalize() error {
 
 func (mw *MeterWindow) show() {
 	winapi.ShowWindow(mw.hWnd, winapi.SW_SHOW)
-	winapi.SetTimer(mw.hWnd, 1, 30, 0)
+	winapi.SetTimer(mw.hWnd, 1, 500, 0)
 }
 
 func (mw *MeterWindow) createWindowClass(hInstance winapi.HINSTANCE) winapi.WNDCLASSEX {
@@ -116,6 +118,7 @@ func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lPa
 
 	case winapi.WM_TIMER:
 		mw.updateWindowLayout()
+		winapi.InvalidateRect(hWnd, nil, true)
 
 	case winapi.WM_DESTROY:
 		winapi.PostQuitMessage(0)

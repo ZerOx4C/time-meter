@@ -8,6 +8,7 @@ import (
 
 type MeterRenderer struct {
 	hWnd           winapi.HWND
+	tasks          []Task
 	width          int32
 	height         int32
 	futureDuration time.Duration
@@ -37,9 +38,65 @@ func (mr *MeterRenderer) draw() {
 	var paint winapi.PAINTSTRUCT
 	hdc := winapi.BeginPaint(mr.hWnd, &paint)
 
+	mr.drawAllCharts(hdc)
 	mr.drawAllScaleLines(hdc)
 
 	winapi.EndPaint(mr.hWnd, &paint)
+}
+
+func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC) {
+	now := time.Now()
+	chartBeginAt := now.Add(-mr.pastDuration)
+	chartEndAt := now.Add(mr.futureDuration)
+	totalSeconds := int32((mr.futureDuration + mr.pastDuration) / time.Second)
+
+	tracks := [][]Task{}
+
+	for _, task := range mr.tasks {
+		if !task.overlapWith(chartBeginAt, chartEndAt) {
+			continue
+		}
+
+		found := false
+
+		for index := range tracks {
+			if !mr.isTaskConflict(tracks[index], task) {
+				tracks[index] = append(tracks[index], task)
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			tracks = append(tracks, []Task{task})
+		}
+	}
+
+	trackWidth := int(mr.width) / len(tracks)
+
+	for trackIndex, track := range tracks {
+		for _, task := range track {
+			var rect winapi.RECT
+			rect.Left = int32(trackIndex*trackWidth) + 1
+			rect.Right = rect.Left + int32(trackWidth) - 2
+			rect.Top = mr.height - mr.height*int32(task.EndAt.Sub(chartBeginAt)/time.Second)/totalSeconds + 1
+			rect.Bottom = mr.height - mr.height*int32(task.BeginAt.Sub(chartBeginAt)/time.Second)/totalSeconds - 1
+			mr.drawChart(hdc, &rect)
+		}
+	}
+}
+
+func (mr *MeterRenderer) isTaskConflict(tasks []Task, desiredTask Task) bool {
+	for _, task := range tasks {
+		if task.overlapWith(desiredTask.BeginAt, desiredTask.EndAt) {
+			return true
+		}
+	}
+	return false
+}
+
+func (mr *MeterRenderer) drawChart(hdc winapi.HDC, rect *winapi.RECT) {
+	winapi.FillRect(hdc, rect, mr.chartBrush)
 }
 
 func (mr *MeterRenderer) drawAllScaleLines(hdc winapi.HDC) {
