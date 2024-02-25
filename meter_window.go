@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/cwchiu/go-winapi"
@@ -33,8 +34,8 @@ func (mw *MeterWindow) initialize() error {
 
 	mw.renderer = new(MeterRenderer)
 	mw.renderer.hWnd = hWnd
-	mw.renderer.futureMinutes = 60 * 3
-	mw.renderer.pastMinutes = 60
+	mw.renderer.futureDuration = time.Hour * 3
+	mw.renderer.pastDuration = time.Hour * 1
 
 	if err := mw.renderer.initialize(); err != nil {
 		return err

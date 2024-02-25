@@ -1,18 +1,20 @@
 package main
 
 import (
+	"time"
+
 	"github.com/cwchiu/go-winapi"
 )
 
 type MeterRenderer struct {
-	hWnd          winapi.HWND
-	width         int32
-	height        int32
-	futureMinutes int32
-	pastMinutes   int32
-	headPen       winapi.HPEN
-	hourPen       winapi.HPEN
-	chartBrush    winapi.HBRUSH
+	hWnd           winapi.HWND
+	width          int32
+	height         int32
+	futureDuration time.Duration
+	pastDuration   time.Duration
+	headPen        winapi.HPEN
+	hourPen        winapi.HPEN
+	chartBrush     winapi.HBRUSH
 }
 
 func (mr *MeterRenderer) initialize() error {
@@ -41,24 +43,25 @@ func (mr *MeterRenderer) draw() {
 }
 
 func (mr *MeterRenderer) drawAllScaleLines(hdc winapi.HDC) {
-	minutes := mr.futureMinutes
-	totalMinutes := mr.futureMinutes + mr.pastMinutes
+	offset := mr.futureDuration
+	totalDuration := mr.futureDuration + mr.pastDuration
+	totalMinutes := int32(totalDuration / time.Minute)
 
 	winapi.SelectObject(hdc, winapi.HGDIOBJ(mr.hourPen))
 
-	for 60 < minutes {
-		minutes -= 60
+	for time.Hour < offset {
+		offset -= time.Hour
 	}
 
-	for minutes < totalMinutes {
-		if minutes != mr.futureMinutes {
-			mr.drawScaleLine(hdc, mr.height*minutes/totalMinutes)
+	for offset < totalDuration {
+		if offset != mr.futureDuration {
+			mr.drawScaleLine(hdc, mr.height*int32(offset/time.Minute)/totalMinutes)
 		}
-		minutes += 60
+		offset += time.Hour
 	}
 
 	winapi.SelectObject(hdc, winapi.HGDIOBJ(mr.headPen))
-	mr.drawScaleLine(hdc, mr.height*mr.futureMinutes/totalMinutes)
+	mr.drawScaleLine(hdc, mr.height*int32(mr.futureDuration/time.Minute)/totalMinutes)
 }
 
 func (mr *MeterRenderer) drawScaleLine(hdc winapi.HDC, y int32) {
