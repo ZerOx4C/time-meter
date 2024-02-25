@@ -11,6 +11,8 @@ import (
 type MeterWindow struct {
 	hInstance winapi.HINSTANCE
 	hWnd      winapi.HWND
+	renderer  *MeterRenderer
+	bound     winapi.RECT
 }
 
 func (mw *MeterWindow) initialize() error {
@@ -29,10 +31,23 @@ func (mw *MeterWindow) initialize() error {
 	mw.hInstance = hInstance
 	mw.hWnd = hWnd
 
+	mw.renderer = new(MeterRenderer)
+	mw.renderer.hWnd = hWnd
+	mw.renderer.futureMinutes = 60 * 3
+	mw.renderer.pastMinutes = 60
+
+	if err := mw.renderer.initialize(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (mw *MeterWindow) finalize() error {
+	if err := mw.renderer.finalize(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -75,22 +90,35 @@ func (mw *MeterWindow) createWindow(hInstance winapi.HINSTANCE, windowClass wina
 func (mw *MeterWindow) updateWindowLayout() {
 	var workarea winapi.RECT
 	winapi.SystemParametersInfo(winapi.SPI_GETWORKAREA, 0, unsafe.Pointer(&workarea), 0)
+
+	mw.bound.Left = workarea.Left
+	mw.bound.Top = workarea.Top
+	mw.bound.Right = workarea.Left + 50
+	mw.bound.Bottom = workarea.Bottom
+
 	winapi.SetWindowPos(
 		mw.hWnd,
 		winapi.HWND_TOPMOST,
-		workarea.Left,
-		workarea.Top,
-		50,
-		workarea.Bottom-workarea.Top,
+		mw.bound.Left,
+		mw.bound.Top,
+		mw.bound.Right-mw.bound.Left,
+		mw.bound.Bottom-mw.bound.Top,
 		winapi.SWP_NOACTIVATE)
 }
 
 func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lParam uintptr) uintptr {
 	switch msg {
+	case winapi.WM_PAINT:
+		mw.renderer.width = mw.bound.Right - mw.bound.Left
+		mw.renderer.height = mw.bound.Bottom - mw.bound.Top
+		mw.renderer.draw()
+
 	case winapi.WM_TIMER:
 		mw.updateWindowLayout()
+
 	case winapi.WM_DESTROY:
 		winapi.PostQuitMessage(0)
+
 	default:
 		return winapi.DefWindowProc(hWnd, msg, wParam, lParam)
 	}
