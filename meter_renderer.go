@@ -7,7 +7,6 @@ import (
 )
 
 type MeterRenderer struct {
-	hWnd           winapi.HWND
 	tasks          []Task
 	width          int32
 	height         int32
@@ -34,14 +33,14 @@ func (mr *MeterRenderer) finalize() error {
 	return nil
 }
 
-func (mr *MeterRenderer) draw() {
+func (mr *MeterRenderer) draw(hWnd winapi.HWND) {
 	var paint winapi.PAINTSTRUCT
-	hdc := winapi.BeginPaint(mr.hWnd, &paint)
+	hdc := winapi.BeginPaint(hWnd, &paint)
 
 	mr.drawAllCharts(hdc)
 	mr.drawAllScaleLines(hdc)
 
-	winapi.EndPaint(mr.hWnd, &paint)
+	winapi.EndPaint(hWnd, &paint)
 }
 
 func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC) {

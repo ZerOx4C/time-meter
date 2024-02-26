@@ -21,10 +21,23 @@ func run() error {
 	}
 
 	meterWindow := new(MeterWindow)
-	meterWindow.tasks = tasks
-
 	if err := meterWindow.initialize(); err != nil {
 		return err
+	}
+
+	meterRenderer := new(MeterRenderer)
+	if err := meterRenderer.initialize(); err != nil {
+		return err
+	}
+
+	meterRenderer.tasks = tasks
+	meterRenderer.futureDuration = time.Hour * 3
+	meterRenderer.pastDuration = time.Hour * 1
+
+	meterWindow.onPaint = func() {
+		meterRenderer.width = meterWindow.bound.Right - meterWindow.bound.Left
+		meterRenderer.height = meterWindow.bound.Bottom - meterWindow.bound.Top
+		meterRenderer.draw(meterWindow.hWnd)
 	}
 
 	meterWindow.show()
@@ -36,6 +49,10 @@ func run() error {
 	}
 
 	if err := meterWindow.finalize(); err != nil {
+		return err
+	}
+
+	if err := meterRenderer.finalize(); err != nil {
 		return err
 	}
 

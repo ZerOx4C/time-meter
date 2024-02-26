@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"syscall"
-	"time"
 	"unsafe"
 
 	"github.com/cwchiu/go-winapi"
@@ -12,9 +11,8 @@ import (
 type MeterWindow struct {
 	hInstance winapi.HINSTANCE
 	hWnd      winapi.HWND
-	renderer  *MeterRenderer
-	tasks     []Task
 	bound     winapi.RECT
+	onPaint   EventHandler
 }
 
 func (mw *MeterWindow) initialize() error {
@@ -33,24 +31,10 @@ func (mw *MeterWindow) initialize() error {
 	mw.hInstance = hInstance
 	mw.hWnd = hWnd
 
-	mw.renderer = new(MeterRenderer)
-	mw.renderer.hWnd = hWnd
-	mw.renderer.tasks = mw.tasks
-	mw.renderer.futureDuration = time.Hour * 3
-	mw.renderer.pastDuration = time.Hour * 1
-
-	if err := mw.renderer.initialize(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (mw *MeterWindow) finalize() error {
-	if err := mw.renderer.finalize(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -112,9 +96,7 @@ func (mw *MeterWindow) updateWindowLayout() {
 func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lParam uintptr) uintptr {
 	switch msg {
 	case winapi.WM_PAINT:
-		mw.renderer.width = mw.bound.Right - mw.bound.Left
-		mw.renderer.height = mw.bound.Bottom - mw.bound.Top
-		mw.renderer.draw()
+		mw.onPaint.Invoke()
 
 	case winapi.WM_TIMER:
 		mw.updateWindowLayout()
