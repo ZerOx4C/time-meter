@@ -39,23 +39,32 @@ func (mr *MeterRenderer) draw(hWnd winapi.HWND) {
 	backBuffer := new(BackBuffer)
 	backDc := backBuffer.begin(hWnd, hdc)
 
-	mr.drawAllCharts(backDc)
-	mr.drawAllScaleLines(backDc)
+	mr.drawAllCharts(backDc,
+		mr.tasks,
+		time.Now(),
+		mr.settings.FutureDuration,
+		mr.settings.PastDuration,
+	)
+
+	mr.drawAllScaleLines(backDc,
+		mr.settings.FutureDuration,
+		mr.settings.PastDuration,
+		mr.settings.ScaleInterval,
+	)
 
 	backBuffer.end()
 
 	winapi.EndPaint(hWnd, &paint)
 }
 
-func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC) {
-	now := time.Now()
-	chartBeginAt := now.Add(-mr.settings.PastDuration)
-	chartEndAt := now.Add(mr.settings.FutureDuration)
-	totalSeconds := int32((mr.settings.FutureDuration + mr.settings.PastDuration) / time.Second)
+func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC, tasks []Task, now time.Time, futureDuration, pastDuration time.Duration) {
+	chartBeginAt := now.Add(-pastDuration)
+	chartEndAt := now.Add(futureDuration)
+	totalSeconds := int32((futureDuration + pastDuration) / time.Second)
 
 	tracks := [][]Task{}
 
-	for _, task := range mr.tasks {
+	for _, task := range tasks {
 		if !task.overlapWith(chartBeginAt, chartEndAt) {
 			continue
 		}
@@ -102,26 +111,26 @@ func (mr *MeterRenderer) drawChart(hdc winapi.HDC, rect *RECT) {
 	winapi.FillRect(hdc, rect.unwrap(), mr.chartBrush)
 }
 
-func (mr *MeterRenderer) drawAllScaleLines(hdc winapi.HDC) {
-	offset := mr.settings.FutureDuration
-	totalDuration := mr.settings.FutureDuration + mr.settings.PastDuration
+func (mr *MeterRenderer) drawAllScaleLines(hdc winapi.HDC, futureDuration, pastDuration, interval time.Duration) {
+	offset := futureDuration
+	totalDuration := futureDuration + pastDuration
 	totalSeconds := int32(totalDuration / time.Second)
 
 	winapi.SelectObject(hdc, winapi.HGDIOBJ(mr.hourPen))
 
-	for mr.settings.ScaleInterval < offset {
-		offset -= mr.settings.ScaleInterval
+	for interval < offset {
+		offset -= interval
 	}
 
 	for offset < totalDuration {
-		if offset != mr.settings.FutureDuration {
+		if offset != futureDuration {
 			mr.drawScaleLine(hdc, mr.height*int32(offset/time.Second)/totalSeconds)
 		}
-		offset += mr.settings.ScaleInterval
+		offset += interval
 	}
 
 	winapi.SelectObject(hdc, winapi.HGDIOBJ(mr.headPen))
-	mr.drawScaleLine(hdc, mr.height*int32(mr.settings.FutureDuration/time.Second)/totalSeconds)
+	mr.drawScaleLine(hdc, mr.height*int32(futureDuration/time.Second)/totalSeconds)
 }
 
 func (mr *MeterRenderer) drawScaleLine(hdc winapi.HDC, y int32) {
