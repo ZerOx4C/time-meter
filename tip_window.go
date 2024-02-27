@@ -12,6 +12,7 @@ type TipWindow struct {
 	hInstance winapi.HINSTANCE
 	hWnd      winapi.HWND
 	settings  *Settings
+	boundLeft int32
 	onPaint   EventHandler
 }
 
@@ -52,7 +53,7 @@ func (tw *TipWindow) update() {
 
 	winapi.SetWindowPos(
 		tw.hWnd, winapi.HWND_TOPMOST,
-		int32(tw.settings.MeterWidth), pos.Y, 0, 0,
+		tw.boundLeft, pos.Y, 0, 0,
 		winapi.SWP_NOACTIVATE|winapi.SWP_NOSIZE)
 
 	winapi.InvalidateRect(tw.hWnd, nil, true)

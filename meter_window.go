@@ -89,8 +89,8 @@ func (mw *MeterWindow) createWindow(hInstance winapi.HINSTANCE, windowClass wina
 }
 
 func (mw *MeterWindow) updateLayout() {
-	var workarea RECT
-	winapi.SystemParametersInfo(winapi.SPI_GETWORKAREA, 0, unsafe.Pointer(&workarea), 0)
+	workareaList := mw.getMonitorRectList()
+	workarea := workareaList[0]
 
 	mw.bound.Left = workarea.Left
 	mw.bound.Top = workarea.Top
@@ -105,6 +105,31 @@ func (mw *MeterWindow) updateLayout() {
 		mw.bound.width(),
 		mw.bound.height(),
 		winapi.SWP_NOACTIVATE)
+}
+
+func (mw *MeterWindow) getMonitorRectList() []RECT {
+	ret := []RECT{}
+	rectChan := make(chan RECT)
+
+	go winapi2.EnumDisplayMonitors(0, nil, syscall.NewCallback(func(hMonitor winapi.HMONITOR) uintptr {
+		var info winapi.MONITORINFO
+		info.CbSize = uint32(unsafe.Sizeof(info))
+		winapi.GetMonitorInfo(hMonitor, &info)
+
+		rectChan <- (RECT)(info.RcWork)
+
+		return 1
+	}), 0)
+
+	count := int(winapi.GetSystemMetrics(winapi.SM_CMONITORS))
+
+	for len(ret) < count {
+		ret = append(ret, <-rectChan)
+	}
+
+	close(rectChan)
+
+	return ret
 }
 
 func (mw *MeterWindow) watchMouse() {

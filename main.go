@@ -75,6 +75,7 @@ func run() error {
 
 		tipRenderer.tasks = focusTasks
 
+		tipWindow.boundLeft = meterWindow.bound.Right
 		tipWindow.update()
 	}
 

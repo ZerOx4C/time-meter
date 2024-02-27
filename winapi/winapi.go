@@ -2,6 +2,7 @@ package winapi
 
 import (
 	"syscall"
+	"unsafe"
 
 	"github.com/cwchiu/go-winapi"
 )
@@ -18,6 +19,7 @@ var (
 
 	// Functions
 	createCompatibleBitmap     uintptr
+	enumDisplayMonitors        uintptr
 	setLayeredWindowAttributes uintptr
 )
 
@@ -28,6 +30,7 @@ func init() {
 
 	// Functions
 	createCompatibleBitmap = winapi.MustGetProcAddress(libgdi32, "CreateCompatibleBitmap")
+	enumDisplayMonitors = winapi.MustGetProcAddress(libuser32, "EnumDisplayMonitors")
 	setLayeredWindowAttributes = winapi.MustGetProcAddress(libuser32, "SetLayeredWindowAttributes")
 }
 
@@ -39,6 +42,17 @@ func CreateCompatibleBitmap(hdc winapi.HDC, cx, cy int32) winapi.HBITMAP {
 	)
 
 	return winapi.HBITMAP(ret)
+}
+
+func EnumDisplayMonitors(hdc winapi.HDC, lprcClip *winapi.RECT, lpfnEnum uintptr, dwData uintptr) bool {
+	ret, _, _ := syscall.SyscallN(enumDisplayMonitors,
+		uintptr(hdc),
+		uintptr(unsafe.Pointer(lprcClip)),
+		uintptr(lpfnEnum),
+		uintptr(dwData),
+	)
+
+	return ret != 0
 }
 
 func SetLayeredWindowAttributes(hwnd winapi.HWND, crKey winapi.COLORREF, bAlpha byte, dwFlags winapi.DWORD) bool {
