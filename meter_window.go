@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"syscall"
+	winapi2 "time-meter/winapi"
 	"unsafe"
 
 	"github.com/cwchiu/go-winapi"
@@ -70,7 +71,7 @@ func (mw *MeterWindow) createWindowClass(hInstance winapi.HINSTANCE) winapi.WNDC
 func (mw *MeterWindow) createWindow(hInstance winapi.HINSTANCE, windowClass winapi.WNDCLASSEX) winapi.HWND {
 	windowTitlePtr, _ := syscall.UTF16PtrFromString("meter")
 	return winapi.CreateWindowEx(
-		winapi.WS_EX_NOACTIVATE,
+		winapi.WS_EX_NOACTIVATE|winapi.WS_EX_LAYERED,
 		windowClass.LpszClassName,
 		windowTitlePtr,
 		winapi.WS_POPUP,
@@ -110,9 +111,11 @@ func (mw *MeterWindow) watchMouse() {
 	}
 
 	if isHit {
+		winapi2.SetLayeredWindowAttributes(mw.hWnd, winapi.RGB(0, 0, 0), 255, winapi2.LWA_ALPHA)
 		mw.onMouseEnter.Invoke()
 
 	} else {
+		winapi2.SetLayeredWindowAttributes(mw.hWnd, winapi.RGB(0, 0, 0), 128, winapi2.LWA_ALPHA)
 		mw.onMouseLeave.Invoke()
 	}
 }
