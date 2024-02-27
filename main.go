@@ -15,22 +15,31 @@ func main() {
 }
 
 func run() error {
+	settings := new(Settings)
+	settings.Default()
+	if err := settings.LoadFile("settings.json"); err != nil {
+		println(err.Error())
+	}
+
 	tasks, err := loadTasks()
 	if err != nil {
 		return err
 	}
 
 	meterWindow := new(MeterWindow)
+	meterWindow.settings = settings
 	if err := meterWindow.initialize(); err != nil {
 		return err
 	}
 
 	tipWindow := new(TipWindow)
+	tipWindow.settings = settings
 	if err := tipWindow.initialize(); err != nil {
 		return err
 	}
 
 	meterRenderer := new(MeterRenderer)
+	meterRenderer.settings = settings
 	if err := meterRenderer.initialize(); err != nil {
 		return err
 	}
@@ -41,8 +50,6 @@ func run() error {
 	}
 
 	meterRenderer.tasks = tasks
-	meterRenderer.futureDuration = time.Hour * 3
-	meterRenderer.pastDuration = time.Hour * 1
 
 	meterWindow.onPaint = func() {
 		meterRenderer.width = meterWindow.bound.width()
@@ -55,8 +62,8 @@ func run() error {
 		winapi.GetCursorPos(cursorPos.unwrap())
 
 		focusRatio := 1 - float64(cursorPos.Y-meterWindow.bound.Top)/float64(meterWindow.bound.height())
-		totalDuration := meterRenderer.futureDuration + meterRenderer.pastDuration
-		focusAt := time.Now().Add(-meterRenderer.pastDuration + time.Duration(focusRatio*float64(totalDuration)))
+		totalDuration := settings.FutureDuration + settings.PastDuration
+		focusAt := time.Now().Add(-settings.PastDuration + time.Duration(focusRatio*float64(totalDuration)))
 
 		var focusTasks []Task
 		for _, task := range tasks {

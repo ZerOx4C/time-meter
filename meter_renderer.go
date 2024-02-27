@@ -7,14 +7,13 @@ import (
 )
 
 type MeterRenderer struct {
-	tasks          []Task
-	width          int32
-	height         int32
-	futureDuration time.Duration
-	pastDuration   time.Duration
-	headPen        winapi.HPEN
-	hourPen        winapi.HPEN
-	chartBrush     winapi.HBRUSH
+	settings   *Settings
+	tasks      []Task
+	width      int32
+	height     int32
+	headPen    winapi.HPEN
+	hourPen    winapi.HPEN
+	chartBrush winapi.HBRUSH
 }
 
 func (mr *MeterRenderer) initialize() error {
@@ -50,9 +49,9 @@ func (mr *MeterRenderer) draw(hWnd winapi.HWND) {
 
 func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC) {
 	now := time.Now()
-	chartBeginAt := now.Add(-mr.pastDuration)
-	chartEndAt := now.Add(mr.futureDuration)
-	totalSeconds := int32((mr.futureDuration + mr.pastDuration) / time.Second)
+	chartBeginAt := now.Add(-mr.settings.PastDuration)
+	chartEndAt := now.Add(mr.settings.FutureDuration)
+	totalSeconds := int32((mr.settings.FutureDuration + mr.settings.PastDuration) / time.Second)
 
 	tracks := [][]Task{}
 
@@ -104,25 +103,25 @@ func (mr *MeterRenderer) drawChart(hdc winapi.HDC, rect *RECT) {
 }
 
 func (mr *MeterRenderer) drawAllScaleLines(hdc winapi.HDC) {
-	offset := mr.futureDuration
-	totalDuration := mr.futureDuration + mr.pastDuration
+	offset := mr.settings.FutureDuration
+	totalDuration := mr.settings.FutureDuration + mr.settings.PastDuration
 	totalSeconds := int32(totalDuration / time.Second)
 
 	winapi.SelectObject(hdc, winapi.HGDIOBJ(mr.hourPen))
 
-	for time.Hour < offset {
-		offset -= time.Hour
+	for mr.settings.ScaleInterval < offset {
+		offset -= mr.settings.ScaleInterval
 	}
 
 	for offset < totalDuration {
-		if offset != mr.futureDuration {
+		if offset != mr.settings.FutureDuration {
 			mr.drawScaleLine(hdc, mr.height*int32(offset/time.Second)/totalSeconds)
 		}
-		offset += time.Hour
+		offset += mr.settings.ScaleInterval
 	}
 
 	winapi.SelectObject(hdc, winapi.HGDIOBJ(mr.headPen))
-	mr.drawScaleLine(hdc, mr.height*int32(mr.futureDuration/time.Second)/totalSeconds)
+	mr.drawScaleLine(hdc, mr.height*int32(mr.settings.FutureDuration/time.Second)/totalSeconds)
 }
 
 func (mr *MeterRenderer) drawScaleLine(hdc winapi.HDC, y int32) {

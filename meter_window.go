@@ -12,6 +12,7 @@ import (
 type MeterWindow struct {
 	hInstance     winapi.HINSTANCE
 	hWnd          winapi.HWND
+	settings      *Settings
 	bound         RECT
 	lastCursorPos POINT
 	onPaint       EventHandler
@@ -85,7 +86,7 @@ func (mw *MeterWindow) updateWindowLayout() {
 
 	mw.bound.Left = workarea.Left
 	mw.bound.Top = workarea.Top
-	mw.bound.Right = workarea.Left + 50
+	mw.bound.Right = workarea.Left + int32(mw.settings.MeterWidth)
 	mw.bound.Bottom = workarea.Bottom
 
 	winapi.SetWindowPos(
@@ -115,7 +116,7 @@ func (mw *MeterWindow) watchMouse() {
 		mw.onMouseEnter.Invoke()
 
 	} else {
-		winapi2.SetLayeredWindowAttributes(mw.hWnd, winapi.RGB(0, 0, 0), 128, winapi2.LWA_ALPHA)
+		winapi2.SetLayeredWindowAttributes(mw.hWnd, winapi.RGB(0, 0, 0), mw.settings.MeterOpacity, winapi2.LWA_ALPHA)
 		mw.onMouseLeave.Invoke()
 	}
 }
