@@ -3,8 +3,11 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
+
+	"github.com/cwchiu/go-winapi"
 )
 
 type Settings struct {
@@ -13,6 +16,9 @@ type Settings struct {
 	PastDuration   time.Duration
 	FutureDuration time.Duration
 	ScaleInterval  time.Duration
+	MainScaleColor winapi.COLORREF
+	SubScalesColor winapi.COLORREF
+	ChartColor     winapi.COLORREF
 }
 
 func (s *Settings) Default() {
@@ -21,15 +27,21 @@ func (s *Settings) Default() {
 	s.PastDuration = time.Hour * 1
 	s.FutureDuration = time.Hour * 3
 	s.ScaleInterval = time.Hour * 1
+	s.MainScaleColor = winapi.RGB(255, 255, 255)
+	s.SubScalesColor = winapi.RGB(128, 128, 128)
+	s.ChartColor = winapi.RGB(255, 128, 0)
 }
 
 func (s *Settings) LoadFile(filename string) error {
 	var rawSettings struct {
-		MeterWidth           *int  `json:"meter_width,omitempty"`
-		MeterOpacity         *byte `json:"meter_opacity,omitempty"`
-		PastMinutes          *int  `json:"past_minutes,omitempty"`
-		FutureMinutes        *int  `json:"future_minutes,omitempty"`
-		ScaleIntervalMinutes *int  `json:"scale_interval_minutes,omitempty"`
+		MeterWidth           *int    `json:"meter_width,omitempty"`
+		MeterOpacity         *byte   `json:"meter_opacity,omitempty"`
+		PastMinutes          *int    `json:"past_minutes,omitempty"`
+		FutureMinutes        *int    `json:"future_minutes,omitempty"`
+		ScaleIntervalMinutes *int    `json:"scale_interval_minutes,omitempty"`
+		MainScaleColorString *string `json:"main_scale_color,omitempty"`
+		SubScalesColorString *string `json:"sub_scales_color,omitempty"`
+		ChartColorString     *string `json:"chart_color,omitempty"`
 	}
 
 	if jsonBytes, err := os.ReadFile(filename); err != nil {
@@ -59,5 +71,23 @@ func (s *Settings) LoadFile(filename string) error {
 		s.ScaleInterval = time.Minute * time.Duration(*rawSettings.ScaleIntervalMinutes)
 	}
 
+	if rawSettings.MainScaleColorString != nil {
+		s.MainScaleColor = s.parseColorString(*rawSettings.MainScaleColorString)
+	}
+
+	if rawSettings.SubScalesColorString != nil {
+		s.SubScalesColor = s.parseColorString(*rawSettings.SubScalesColorString)
+	}
+
+	if rawSettings.ChartColorString != nil {
+		s.ChartColor = s.parseColorString(*rawSettings.ChartColorString)
+	}
+
 	return nil
+}
+
+func (s *Settings) parseColorString(colorString string) winapi.COLORREF {
+	var r, g, b int32
+	fmt.Sscanf(colorString, "#%02x%02x%02x", &r, &g, &b)
+	return winapi.RGB(r, g, b)
 }

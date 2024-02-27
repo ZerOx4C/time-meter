@@ -17,9 +17,9 @@ type MeterRenderer struct {
 }
 
 func (mr *MeterRenderer) initialize() error {
-	mr.headPen = winapi.CreatePen(winapi.PS_SOLID, 1, winapi.RGB(255, 255, 255))
-	mr.hourPen = winapi.CreatePen(winapi.PS_SOLID, 1, winapi.RGB(64, 64, 64))
-	mr.chartBrush = winapi.CreateSolidBrush(winapi.RGB(255, 128, 0))
+	mr.headPen = winapi.CreatePen(winapi.PS_SOLID, 1, mr.settings.MainScaleColor)
+	mr.hourPen = winapi.CreatePen(winapi.PS_SOLID, 1, mr.settings.SubScalesColor)
+	mr.chartBrush = winapi.CreateSolidBrush(mr.settings.ChartColor)
 
 	return nil
 }
