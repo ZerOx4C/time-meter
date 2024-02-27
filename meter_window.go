@@ -92,6 +92,10 @@ func (mw *MeterWindow) updateLayout() {
 	workareaList := mw.getMonitorRectList()
 	workarea := workareaList[0]
 
+	if index := mw.settings.TargetDisplayIndex; 0 <= index && index < len(workareaList) {
+		workarea = workareaList[index]
+	}
+
 	mw.bound.Left = workarea.Left
 	mw.bound.Top = workarea.Top
 	mw.bound.Right = workarea.Left + int32(mw.settings.MeterWidth)

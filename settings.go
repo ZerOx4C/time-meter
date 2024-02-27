@@ -11,19 +11,21 @@ import (
 )
 
 type Settings struct {
-	MeterWidth      int
-	MeterOpacity    byte
-	PastDuration    time.Duration
-	FutureDuration  time.Duration
-	ScaleInterval   time.Duration
-	BackgroundColor winapi.COLORREF
-	MainScaleColor  winapi.COLORREF
-	SubScalesColor  winapi.COLORREF
-	ChartColor      winapi.COLORREF
-	TipTextColor    winapi.COLORREF
+	TargetDisplayIndex int
+	MeterWidth         int
+	MeterOpacity       byte
+	PastDuration       time.Duration
+	FutureDuration     time.Duration
+	ScaleInterval      time.Duration
+	BackgroundColor    winapi.COLORREF
+	MainScaleColor     winapi.COLORREF
+	SubScalesColor     winapi.COLORREF
+	ChartColor         winapi.COLORREF
+	TipTextColor       winapi.COLORREF
 }
 
 func (s *Settings) Default() {
+	s.TargetDisplayIndex = 0
 	s.MeterWidth = 50
 	s.MeterOpacity = 128
 	s.PastDuration = time.Hour * 1
@@ -38,6 +40,7 @@ func (s *Settings) Default() {
 
 func (s *Settings) LoadFile(filename string) error {
 	var rawSettings struct {
+		TargetDisplayIndex    *int    `json:"target_display_index,omitempty"`
 		MeterWidth            *int    `json:"meter_width,omitempty"`
 		MeterOpacity          *byte   `json:"meter_opacity,omitempty"`
 		PastMinutes           *int    `json:"past_minutes,omitempty"`
@@ -55,6 +58,10 @@ func (s *Settings) LoadFile(filename string) error {
 
 	} else if err := json.NewDecoder(bytes.NewReader(jsonBytes)).Decode(&rawSettings); err != nil {
 		return err
+	}
+
+	if rawSettings.TargetDisplayIndex != nil {
+		s.TargetDisplayIndex = *rawSettings.TargetDisplayIndex
 	}
 
 	if rawSettings.MeterWidth != nil {
