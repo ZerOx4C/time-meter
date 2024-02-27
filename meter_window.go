@@ -52,7 +52,7 @@ func (mw *MeterWindow) finalize() error {
 
 func (mw *MeterWindow) show() {
 	winapi.ShowWindow(mw.hWnd, winapi.SW_SHOW)
-	mw.updateWindowLayout()
+	mw.updateLayout()
 
 	winapi.SetTimer(mw.hWnd, EID_UPDATE_LAYOUT, 1000, 0)
 	winapi.SetTimer(mw.hWnd, EID_UPDATE_CHART, 1000/2, 0)
@@ -90,7 +90,7 @@ func (mw *MeterWindow) createWindow(hInstance winapi.HINSTANCE, windowClass wina
 		0, 0, hInstance, nil)
 }
 
-func (mw *MeterWindow) updateWindowLayout() {
+func (mw *MeterWindow) updateLayout() {
 	var workarea RECT
 	winapi.SystemParametersInfo(winapi.SPI_GETWORKAREA, 0, unsafe.Pointer(&workarea), 0)
 
@@ -142,7 +142,7 @@ func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lPa
 	case winapi.WM_TIMER:
 		switch wParam {
 		case EID_UPDATE_LAYOUT:
-			mw.updateWindowLayout()
+			mw.updateLayout()
 
 		case EID_UPDATE_CHART:
 			winapi.InvalidateRect(hWnd, nil, true)
