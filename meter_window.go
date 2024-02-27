@@ -9,10 +9,13 @@ import (
 )
 
 type MeterWindow struct {
-	hInstance winapi.HINSTANCE
-	hWnd      winapi.HWND
-	bound     winapi.RECT
-	onPaint   EventHandler
+	hInstance     winapi.HINSTANCE
+	hWnd          winapi.HWND
+	bound         winapi.RECT
+	lastCursorPos winapi.POINT
+	onPaint       EventHandler
+	onMouseEnter  EventHandler
+	onMouseLeave  EventHandler
 }
 
 func (mw *MeterWindow) initialize() error {
@@ -40,7 +43,7 @@ func (mw *MeterWindow) finalize() error {
 
 func (mw *MeterWindow) show() {
 	winapi.ShowWindow(mw.hWnd, winapi.SW_SHOW)
-	winapi.SetTimer(mw.hWnd, 1, 500, 0)
+	winapi.SetTimer(mw.hWnd, 1, 1000/30, 0)
 }
 
 func (mw *MeterWindow) createWindowClass(hInstance winapi.HINSTANCE) winapi.WNDCLASSEX {
@@ -93,6 +96,38 @@ func (mw *MeterWindow) updateWindowLayout() {
 		winapi.SWP_NOACTIVATE)
 }
 
+func (mw *MeterWindow) watchMouse() {
+	var currentCursorPos winapi.POINT
+	winapi.GetCursorPos(&currentCursorPos)
+
+	isHit := mw.isHit(mw.bound, currentCursorPos)
+	wasHit := mw.isHit(mw.bound, mw.lastCursorPos)
+	mw.lastCursorPos = currentCursorPos
+
+	if isHit == wasHit {
+		return
+	}
+
+	if isHit {
+		mw.onMouseEnter.Invoke()
+
+	} else {
+		mw.onMouseLeave.Invoke()
+	}
+}
+
+func (mw *MeterWindow) isHit(bound winapi.RECT, pos winapi.POINT) bool {
+	if pos.X < bound.Left || bound.Right < pos.X {
+		return false
+	}
+
+	if pos.Y < bound.Top || bound.Bottom < pos.Y {
+		return false
+	}
+
+	return true
+}
+
 func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lParam uintptr) uintptr {
 	switch msg {
 	case winapi.WM_PAINT:
@@ -100,6 +135,7 @@ func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lPa
 
 	case winapi.WM_TIMER:
 		mw.updateWindowLayout()
+		mw.watchMouse()
 		winapi.InvalidateRect(hWnd, nil, true)
 
 	case winapi.WM_DESTROY:

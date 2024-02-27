@@ -25,8 +25,18 @@ func run() error {
 		return err
 	}
 
+	tipWindow := new(TipWindow)
+	if err := tipWindow.initialize(); err != nil {
+		return err
+	}
+
 	meterRenderer := new(MeterRenderer)
 	if err := meterRenderer.initialize(); err != nil {
+		return err
+	}
+
+	tipRenderer := new(TipRenderer)
+	if err := tipRenderer.initialize(); err != nil {
 		return err
 	}
 
@@ -34,10 +44,24 @@ func run() error {
 	meterRenderer.futureDuration = time.Hour * 3
 	meterRenderer.pastDuration = time.Hour * 1
 
+	tipRenderer.tasks = tasks
+
 	meterWindow.onPaint = func() {
 		meterRenderer.width = meterWindow.bound.Right - meterWindow.bound.Left
 		meterRenderer.height = meterWindow.bound.Bottom - meterWindow.bound.Top
 		meterRenderer.draw(meterWindow.hWnd)
+	}
+
+	meterWindow.onMouseEnter = func() {
+		tipWindow.show()
+	}
+
+	meterWindow.onMouseLeave = func() {
+		tipWindow.hide()
+	}
+
+	tipWindow.onPaint = func() {
+		tipRenderer.draw(tipWindow.hWnd)
 	}
 
 	meterWindow.show()
@@ -52,7 +76,15 @@ func run() error {
 		return err
 	}
 
+	if err := tipWindow.finalize(); err != nil {
+		return err
+	}
+
 	if err := meterRenderer.finalize(); err != nil {
+		return err
+	}
+
+	if err := tipRenderer.finalize(); err != nil {
 		return err
 	}
 
