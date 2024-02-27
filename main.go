@@ -44,12 +44,30 @@ func run() error {
 	meterRenderer.futureDuration = time.Hour * 3
 	meterRenderer.pastDuration = time.Hour * 1
 
-	tipRenderer.tasks = tasks
-
 	meterWindow.onPaint = func() {
 		meterRenderer.width = meterWindow.bound.width()
 		meterRenderer.height = meterWindow.bound.height()
 		meterRenderer.draw(meterWindow.hWnd)
+	}
+
+	meterWindow.onMouseMove = func() {
+		var cursorPos POINT
+		winapi.GetCursorPos(cursorPos.unwrap())
+
+		focusRatio := 1 - float64(cursorPos.Y-meterWindow.bound.Top)/float64(meterWindow.bound.height())
+		totalDuration := meterRenderer.futureDuration + meterRenderer.pastDuration
+		focusAt := time.Now().Add(-meterRenderer.pastDuration + time.Duration(focusRatio*float64(totalDuration)))
+
+		var focusTasks []Task
+		for _, task := range tasks {
+			if task.overlapWith(focusAt, focusAt) {
+				focusTasks = append(focusTasks, task)
+			}
+		}
+
+		tipRenderer.tasks = focusTasks
+
+		tipWindow.update()
 	}
 
 	meterWindow.onMouseEnter = func() {

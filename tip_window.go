@@ -39,11 +39,22 @@ func (tw *TipWindow) finalize() error {
 
 func (tw *TipWindow) show() {
 	winapi.ShowWindow(tw.hWnd, winapi.SW_SHOW)
-	winapi.SetTimer(tw.hWnd, 1, 1000/30, 0)
 }
 
 func (tw *TipWindow) hide() {
 	winapi.ShowWindow(tw.hWnd, winapi.SW_HIDE)
+}
+
+func (tw *TipWindow) update() {
+	var pos winapi.POINT
+	winapi.GetCursorPos(&pos)
+
+	winapi.SetWindowPos(
+		tw.hWnd, winapi.HWND_TOPMOST,
+		50, pos.Y, 0, 0,
+		winapi.SWP_NOACTIVATE|winapi.SWP_NOSIZE)
+
+	winapi.InvalidateRect(tw.hWnd, nil, true)
 }
 
 func (tw *TipWindow) createWindowClass(hInstance winapi.HINSTANCE) winapi.WNDCLASSEX {
@@ -77,23 +88,10 @@ func (tw *TipWindow) createWindow(hInstance winapi.HINSTANCE, windowClass winapi
 		0, 0, hInstance, nil)
 }
 
-func (tw *TipWindow) updateWindowLayout() {
-	var pos winapi.POINT
-	winapi.GetCursorPos(&pos)
-
-	winapi.SetWindowPos(
-		tw.hWnd, winapi.HWND_TOPMOST,
-		50, pos.Y, 0, 0,
-		winapi.SWP_NOACTIVATE|winapi.SWP_NOSIZE)
-}
-
 func (tw *TipWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lParam uintptr) uintptr {
 	switch msg {
 	case winapi.WM_PAINT:
 		tw.onPaint.Invoke()
-
-	case winapi.WM_TIMER:
-		tw.updateWindowLayout()
 
 	case winapi.WM_DESTROY:
 		winapi.PostQuitMessage(0)

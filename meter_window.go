@@ -14,6 +14,7 @@ type MeterWindow struct {
 	bound         RECT
 	lastCursorPos POINT
 	onPaint       EventHandler
+	onMouseMove   EventHandler
 	onMouseEnter  EventHandler
 	onMouseLeave  EventHandler
 }
@@ -120,6 +121,9 @@ func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lPa
 	switch msg {
 	case winapi.WM_PAINT:
 		mw.onPaint.Invoke()
+
+	case winapi.WM_MOUSEMOVE:
+		mw.onMouseMove.Invoke()
 
 	case winapi.WM_TIMER:
 		mw.updateWindowLayout()
