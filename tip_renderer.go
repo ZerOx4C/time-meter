@@ -34,17 +34,20 @@ func (tr *TipRenderer) draw(hWnd winapi.HWND) {
 	var paint winapi.PAINTSTRUCT
 	hdc := winapi.BeginPaint(hWnd, &paint)
 
-	winapi.SetBkMode(hdc, winapi.TRANSPARENT)
-	winapi.SelectObject(hdc, winapi.HGDIOBJ(tr.font))
-	winapi.SetTextColor(hdc, winapi.RGB(255, 255, 255))
+	backBuffer := new(BackBuffer)
+	backDc := backBuffer.begin(hWnd, hdc)
+
+	winapi.SetBkMode(backDc, winapi.TRANSPARENT)
+	winapi.SelectObject(backDc, winapi.HGDIOBJ(tr.font))
+	winapi.SetTextColor(backDc, winapi.RGB(255, 255, 255))
 
 	subjectTextPtr, _ := syscall.UTF16PtrFromString(tr.createSubjectText(tr.tasks))
 	timeTextPtr, _ := syscall.UTF16PtrFromString(tr.createTimeText(tr.tasks, time.Now()))
 
 	var subjectRect RECT
 	var timeRect RECT
-	winapi.DrawText(hdc, subjectTextPtr, -1, subjectRect.unwrap(), winapi.DT_CALCRECT)
-	winapi.DrawText(hdc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT|winapi.DT_CALCRECT)
+	winapi.DrawText(backDc, subjectTextPtr, -1, subjectRect.unwrap(), winapi.DT_CALCRECT)
+	winapi.DrawText(backDc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT|winapi.DT_CALCRECT)
 
 	const (
 		PADDING_LEFT   = 5
@@ -57,8 +60,8 @@ func (tr *TipRenderer) draw(hWnd winapi.HWND) {
 	subjectRect.translate(PADDING_LEFT, PADDING_TOP)
 	timeRect.translate(subjectRect.Right+MARGIN, PADDING_TOP)
 
-	winapi.DrawText(hdc, subjectTextPtr, -1, subjectRect.unwrap(), 0)
-	winapi.DrawText(hdc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT)
+	winapi.DrawText(backDc, subjectTextPtr, -1, subjectRect.unwrap(), 0)
+	winapi.DrawText(backDc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT)
 
 	winapi.SetWindowPos(
 		hWnd, winapi.HWND_TOPMOST,
@@ -66,6 +69,8 @@ func (tr *TipRenderer) draw(hWnd winapi.HWND) {
 		PADDING_LEFT+subjectRect.width()+MARGIN+timeRect.width()+PADDING_RIGHT,
 		PADDING_TOP+subjectRect.height()+PADDING_BOTTOM,
 		winapi.SWP_NOACTIVATE|winapi.SWP_NOMOVE)
+
+	backBuffer.end()
 
 	winapi.EndPaint(hWnd, &paint)
 }

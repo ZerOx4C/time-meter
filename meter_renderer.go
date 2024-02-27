@@ -37,8 +37,13 @@ func (mr *MeterRenderer) draw(hWnd winapi.HWND) {
 	var paint winapi.PAINTSTRUCT
 	hdc := winapi.BeginPaint(hWnd, &paint)
 
-	mr.drawAllCharts(hdc)
-	mr.drawAllScaleLines(hdc)
+	backBuffer := new(BackBuffer)
+	backDc := backBuffer.begin(hWnd, hdc)
+
+	mr.drawAllCharts(backDc)
+	mr.drawAllScaleLines(backDc)
+
+	backBuffer.end()
 
 	winapi.EndPaint(hWnd, &paint)
 }

@@ -93,6 +93,9 @@ func (tw *TipWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lPara
 	case winapi.WM_PAINT:
 		tw.onPaint.Invoke()
 
+	case winapi.WM_ERASEBKGND:
+		return 1
+
 	case winapi.WM_DESTROY:
 		winapi.PostQuitMessage(0)
 
