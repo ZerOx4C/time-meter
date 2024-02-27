@@ -112,11 +112,11 @@ func (mw *MeterWindow) watchMouse() {
 	}
 
 	if isHit {
-		winapi2.SetLayeredWindowAttributes(mw.hWnd, winapi.RGB(0, 0, 0), 255, winapi2.LWA_ALPHA)
+		winapi2.SetLayeredWindowAttributes(mw.hWnd, 0, 255, winapi2.LWA_ALPHA)
 		mw.onMouseEnter.Invoke()
 
 	} else {
-		winapi2.SetLayeredWindowAttributes(mw.hWnd, winapi.RGB(0, 0, 0), mw.settings.MeterOpacity, winapi2.LWA_ALPHA)
+		winapi2.SetLayeredWindowAttributes(mw.hWnd, 0, mw.settings.MeterOpacity, winapi2.LWA_ALPHA)
 		mw.onMouseLeave.Invoke()
 	}
 }
