@@ -22,8 +22,7 @@ type MeterWindow struct {
 }
 
 const (
-	EID_UPDATE_LAYOUT = 1 + iota
-	EID_UPDATE_CHART
+	EID_UPDATE_CHART = 1 + iota
 	EID_WATCH_MOUSE
 )
 
@@ -54,7 +53,6 @@ func (mw *MeterWindow) show() {
 	winapi.ShowWindow(mw.hWnd, winapi.SW_SHOW)
 	mw.updateLayout()
 
-	winapi.SetTimer(mw.hWnd, EID_UPDATE_LAYOUT, 1000, 0)
 	winapi.SetTimer(mw.hWnd, EID_UPDATE_CHART, 1000/2, 0)
 	winapi.SetTimer(mw.hWnd, EID_WATCH_MOUSE, 1000/30, 0)
 }
@@ -139,11 +137,11 @@ func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lPa
 	case winapi.WM_MOUSEMOVE:
 		mw.onMouseMove.Invoke()
 
+	case winapi.WM_DISPLAYCHANGE:
+		mw.updateLayout()
+
 	case winapi.WM_TIMER:
 		switch wParam {
-		case EID_UPDATE_LAYOUT:
-			mw.updateLayout()
-
 		case EID_UPDATE_CHART:
 			winapi.InvalidateRect(hWnd, nil, true)
 
