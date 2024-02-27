@@ -41,10 +41,10 @@ func (tr *TipRenderer) draw(hWnd winapi.HWND) {
 	subjectTextPtr, _ := syscall.UTF16PtrFromString(tr.createSubjectText(tr.tasks))
 	timeTextPtr, _ := syscall.UTF16PtrFromString(tr.createTimeText(tr.tasks, time.Now()))
 
-	var subjectRect winapi.RECT
-	var timeRect winapi.RECT
-	winapi.DrawText(hdc, subjectTextPtr, -1, &subjectRect, winapi.DT_CALCRECT)
-	winapi.DrawText(hdc, timeTextPtr, -1, &timeRect, winapi.DT_RIGHT|winapi.DT_CALCRECT)
+	var subjectRect RECT
+	var timeRect RECT
+	winapi.DrawText(hdc, subjectTextPtr, -1, subjectRect.unwrap(), winapi.DT_CALCRECT)
+	winapi.DrawText(hdc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT|winapi.DT_CALCRECT)
 
 	const (
 		PADDING_LEFT   = 5
@@ -54,24 +54,17 @@ func (tr *TipRenderer) draw(hWnd winapi.HWND) {
 		MARGIN         = 10
 	)
 
-	subjectRect.Left += PADDING_LEFT
-	subjectRect.Right += PADDING_LEFT
-	subjectRect.Top += PADDING_TOP
-	subjectRect.Bottom += PADDING_TOP
+	subjectRect.translate(PADDING_LEFT, PADDING_TOP)
+	timeRect.translate(subjectRect.Right+MARGIN, PADDING_TOP)
 
-	timeRect.Left += subjectRect.Right + MARGIN
-	timeRect.Right += subjectRect.Right + MARGIN
-	timeRect.Top += PADDING_TOP
-	timeRect.Bottom += PADDING_TOP
-
-	winapi.DrawText(hdc, subjectTextPtr, -1, &subjectRect, 0)
-	winapi.DrawText(hdc, timeTextPtr, -1, &timeRect, winapi.DT_RIGHT)
+	winapi.DrawText(hdc, subjectTextPtr, -1, subjectRect.unwrap(), 0)
+	winapi.DrawText(hdc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT)
 
 	winapi.SetWindowPos(
 		hWnd, winapi.HWND_TOPMOST,
 		0, 0,
-		PADDING_LEFT+subjectRect.Right-subjectRect.Left+MARGIN+timeRect.Right-timeRect.Left+PADDING_RIGHT,
-		PADDING_TOP+subjectRect.Bottom-subjectRect.Top+PADDING_BOTTOM,
+		PADDING_LEFT+subjectRect.width()+MARGIN+timeRect.width()+PADDING_RIGHT,
+		PADDING_TOP+subjectRect.height()+PADDING_BOTTOM,
 		winapi.SWP_NOACTIVATE|winapi.SWP_NOMOVE)
 
 	winapi.EndPaint(hWnd, &paint)

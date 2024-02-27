@@ -75,7 +75,7 @@ func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC) {
 
 	for trackIndex, track := range tracks {
 		for _, task := range track {
-			var rect winapi.RECT
+			var rect RECT
 			rect.Left = int32(trackIndex*trackWidth) + 1
 			rect.Right = rect.Left + int32(trackWidth) - 2
 			rect.Top = mr.height - mr.height*int32(task.EndAt.Sub(chartBeginAt)/time.Second)/totalSeconds + 1
@@ -94,8 +94,8 @@ func (mr *MeterRenderer) isTaskConflict(tasks []Task, desiredTask Task) bool {
 	return false
 }
 
-func (mr *MeterRenderer) drawChart(hdc winapi.HDC, rect *winapi.RECT) {
-	winapi.FillRect(hdc, rect, mr.chartBrush)
+func (mr *MeterRenderer) drawChart(hdc winapi.HDC, rect *RECT) {
+	winapi.FillRect(hdc, rect.unwrap(), mr.chartBrush)
 }
 
 func (mr *MeterRenderer) drawAllScaleLines(hdc winapi.HDC) {

@@ -47,8 +47,8 @@ func run() error {
 	tipRenderer.tasks = tasks
 
 	meterWindow.onPaint = func() {
-		meterRenderer.width = meterWindow.bound.Right - meterWindow.bound.Left
-		meterRenderer.height = meterWindow.bound.Bottom - meterWindow.bound.Top
+		meterRenderer.width = meterWindow.bound.width()
+		meterRenderer.height = meterWindow.bound.height()
 		meterRenderer.draw(meterWindow.hWnd)
 	}
 
