@@ -10,11 +10,14 @@ import (
 )
 
 type TipRenderer struct {
-	tasks []Task
-	font  winapi.HFONT
+	settings        *Settings
+	tasks           []Task
+	backgroundBrush winapi.HBRUSH
+	font            winapi.HFONT
 }
 
 func (tr *TipRenderer) initialize() error {
+	tr.backgroundBrush = winapi.CreateSolidBrush(tr.settings.BackgroundColor)
 	tr.font = winapi.CreateFont(
 		15, 0, 0, 0, winapi.FW_NORMAL, 0, 0, 0,
 		winapi.ANSI_CHARSET, winapi.OUT_DEVICE_PRECIS,
@@ -25,6 +28,7 @@ func (tr *TipRenderer) initialize() error {
 }
 
 func (tr *TipRenderer) finalize() error {
+	winapi.DeleteObject(winapi.HGDIOBJ(tr.backgroundBrush))
 	winapi.DeleteObject(winapi.HGDIOBJ(tr.font))
 
 	return nil
@@ -37,9 +41,13 @@ func (tr *TipRenderer) draw(hWnd winapi.HWND) {
 	backBuffer := new(BackBuffer)
 	backDc := backBuffer.begin(hWnd, hdc)
 
+	var clientRect RECT
+	winapi.GetClientRect(hWnd, clientRect.unwrap())
+	winapi.FillRect(backDc, clientRect.unwrap(), tr.backgroundBrush)
+
 	winapi.SetBkMode(backDc, winapi.TRANSPARENT)
 	winapi.SelectObject(backDc, winapi.HGDIOBJ(tr.font))
-	winapi.SetTextColor(backDc, winapi.RGB(255, 255, 255))
+	winapi.SetTextColor(backDc, tr.settings.TipTextColor)
 
 	subjectTextPtr, _ := syscall.UTF16PtrFromString(tr.createSubjectText(tr.tasks))
 	timeTextPtr, _ := syscall.UTF16PtrFromString(tr.createTimeText(tr.tasks, time.Now()))

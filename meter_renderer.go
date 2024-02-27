@@ -7,16 +7,18 @@ import (
 )
 
 type MeterRenderer struct {
-	settings   *Settings
-	tasks      []Task
-	width      int32
-	height     int32
-	headPen    winapi.HPEN
-	hourPen    winapi.HPEN
-	chartBrush winapi.HBRUSH
+	settings        *Settings
+	tasks           []Task
+	width           int32
+	height          int32
+	backgroundBrush winapi.HBRUSH
+	headPen         winapi.HPEN
+	hourPen         winapi.HPEN
+	chartBrush      winapi.HBRUSH
 }
 
 func (mr *MeterRenderer) initialize() error {
+	mr.backgroundBrush = winapi.CreateSolidBrush(mr.settings.BackgroundColor)
 	mr.headPen = winapi.CreatePen(winapi.PS_SOLID, 1, mr.settings.MainScaleColor)
 	mr.hourPen = winapi.CreatePen(winapi.PS_SOLID, 1, mr.settings.SubScalesColor)
 	mr.chartBrush = winapi.CreateSolidBrush(mr.settings.ChartColor)
@@ -25,6 +27,7 @@ func (mr *MeterRenderer) initialize() error {
 }
 
 func (mr *MeterRenderer) finalize() error {
+	winapi.DeleteObject(winapi.HGDIOBJ(mr.backgroundBrush))
 	winapi.DeleteObject(winapi.HGDIOBJ(mr.headPen))
 	winapi.DeleteObject(winapi.HGDIOBJ(mr.hourPen))
 	winapi.DeleteObject(winapi.HGDIOBJ(mr.chartBrush))
@@ -38,6 +41,10 @@ func (mr *MeterRenderer) draw(hWnd winapi.HWND) {
 
 	backBuffer := new(BackBuffer)
 	backDc := backBuffer.begin(hWnd, hdc)
+
+	var clientRect RECT
+	winapi.GetClientRect(hWnd, clientRect.unwrap())
+	winapi.FillRect(backDc, clientRect.unwrap(), mr.backgroundBrush)
 
 	mr.drawAllCharts(backDc,
 		mr.tasks,

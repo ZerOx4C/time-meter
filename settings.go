@@ -11,14 +11,16 @@ import (
 )
 
 type Settings struct {
-	MeterWidth     int
-	MeterOpacity   byte
-	PastDuration   time.Duration
-	FutureDuration time.Duration
-	ScaleInterval  time.Duration
-	MainScaleColor winapi.COLORREF
-	SubScalesColor winapi.COLORREF
-	ChartColor     winapi.COLORREF
+	MeterWidth      int
+	MeterOpacity    byte
+	PastDuration    time.Duration
+	FutureDuration  time.Duration
+	ScaleInterval   time.Duration
+	BackgroundColor winapi.COLORREF
+	MainScaleColor  winapi.COLORREF
+	SubScalesColor  winapi.COLORREF
+	ChartColor      winapi.COLORREF
+	TipTextColor    winapi.COLORREF
 }
 
 func (s *Settings) Default() {
@@ -27,21 +29,25 @@ func (s *Settings) Default() {
 	s.PastDuration = time.Hour * 1
 	s.FutureDuration = time.Hour * 3
 	s.ScaleInterval = time.Hour * 1
+	s.BackgroundColor = winapi.RGB(0, 0, 0)
 	s.MainScaleColor = winapi.RGB(255, 255, 255)
 	s.SubScalesColor = winapi.RGB(128, 128, 128)
 	s.ChartColor = winapi.RGB(255, 128, 0)
+	s.TipTextColor = winapi.RGB(255, 255, 255)
 }
 
 func (s *Settings) LoadFile(filename string) error {
 	var rawSettings struct {
-		MeterWidth           *int    `json:"meter_width,omitempty"`
-		MeterOpacity         *byte   `json:"meter_opacity,omitempty"`
-		PastMinutes          *int    `json:"past_minutes,omitempty"`
-		FutureMinutes        *int    `json:"future_minutes,omitempty"`
-		ScaleIntervalMinutes *int    `json:"scale_interval_minutes,omitempty"`
-		MainScaleColorString *string `json:"main_scale_color,omitempty"`
-		SubScalesColorString *string `json:"sub_scales_color,omitempty"`
-		ChartColorString     *string `json:"chart_color,omitempty"`
+		MeterWidth            *int    `json:"meter_width,omitempty"`
+		MeterOpacity          *byte   `json:"meter_opacity,omitempty"`
+		PastMinutes           *int    `json:"past_minutes,omitempty"`
+		FutureMinutes         *int    `json:"future_minutes,omitempty"`
+		ScaleIntervalMinutes  *int    `json:"scale_interval_minutes,omitempty"`
+		BackgroundColorString *string `json:"background_color,omitempty"`
+		MainScaleColorString  *string `json:"main_scale_color,omitempty"`
+		SubScalesColorString  *string `json:"sub_scales_color,omitempty"`
+		ChartColorString      *string `json:"chart_color,omitempty"`
+		TipTextColorString    *string `json:"tip_text_color,omitempty"`
 	}
 
 	if jsonBytes, err := os.ReadFile(filename); err != nil {
@@ -71,6 +77,10 @@ func (s *Settings) LoadFile(filename string) error {
 		s.ScaleInterval = time.Minute * time.Duration(*rawSettings.ScaleIntervalMinutes)
 	}
 
+	if rawSettings.BackgroundColorString != nil {
+		s.BackgroundColor = s.parseColorString(*rawSettings.BackgroundColorString)
+	}
+
 	if rawSettings.MainScaleColorString != nil {
 		s.MainScaleColor = s.parseColorString(*rawSettings.MainScaleColorString)
 	}
@@ -81,6 +91,10 @@ func (s *Settings) LoadFile(filename string) error {
 
 	if rawSettings.ChartColorString != nil {
 		s.ChartColor = s.parseColorString(*rawSettings.ChartColorString)
+	}
+
+	if rawSettings.TipTextColorString != nil {
+		s.TipTextColor = s.parseColorString(*rawSettings.TipTextColorString)
 	}
 
 	return nil

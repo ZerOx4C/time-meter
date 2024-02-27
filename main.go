@@ -45,6 +45,7 @@ func run() error {
 	}
 
 	tipRenderer := new(TipRenderer)
+	tipRenderer.settings = settings
 	if err := tipRenderer.initialize(); err != nil {
 		return err
 	}

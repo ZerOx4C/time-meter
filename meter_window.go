@@ -62,7 +62,7 @@ func (mw *MeterWindow) createWindowClass(hInstance winapi.HINSTANCE) winapi.WNDC
 	ret.HInstance = hInstance
 	ret.HIcon = winapi.LoadIcon(hInstance, winapi.MAKEINTRESOURCE(132))
 	ret.HCursor = winapi.LoadCursor(0, winapi.MAKEINTRESOURCE(winapi.IDC_ARROW))
-	ret.HbrBackground = winapi.HBRUSH(winapi.GetStockObject(winapi.BLACK_BRUSH))
+	ret.HbrBackground = 0
 	ret.LpszMenuName = nil
 	ret.LpszClassName, _ = syscall.UTF16PtrFromString("meter")
 
@@ -125,9 +125,6 @@ func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lPa
 	switch msg {
 	case winapi.WM_PAINT:
 		mw.onPaint.Invoke()
-
-	case winapi.WM_ERASEBKGND:
-		return 1
 
 	case winapi.WM_MOUSEMOVE:
 		mw.onMouseMove.Invoke()
