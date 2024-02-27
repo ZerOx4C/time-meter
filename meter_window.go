@@ -21,6 +21,12 @@ type MeterWindow struct {
 	onMouseLeave  EventHandler
 }
 
+const (
+	EID_UPDATE_LAYOUT = 1 + iota
+	EID_UPDATE_CHART
+	EID_WATCH_MOUSE
+)
+
 func (mw *MeterWindow) initialize() error {
 	hInstance := winapi.GetModuleHandle(nil)
 	windowClass := mw.createWindowClass(hInstance)
@@ -46,7 +52,11 @@ func (mw *MeterWindow) finalize() error {
 
 func (mw *MeterWindow) show() {
 	winapi.ShowWindow(mw.hWnd, winapi.SW_SHOW)
-	winapi.SetTimer(mw.hWnd, 1, 1000/30, 0)
+	mw.updateWindowLayout()
+
+	winapi.SetTimer(mw.hWnd, EID_UPDATE_LAYOUT, 1000, 0)
+	winapi.SetTimer(mw.hWnd, EID_UPDATE_CHART, 1000/2, 0)
+	winapi.SetTimer(mw.hWnd, EID_WATCH_MOUSE, 1000/30, 0)
 }
 
 func (mw *MeterWindow) createWindowClass(hInstance winapi.HINSTANCE) winapi.WNDCLASSEX {
@@ -130,9 +140,16 @@ func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lPa
 		mw.onMouseMove.Invoke()
 
 	case winapi.WM_TIMER:
-		mw.updateWindowLayout()
-		mw.watchMouse()
-		winapi.InvalidateRect(hWnd, nil, true)
+		switch wParam {
+		case EID_UPDATE_LAYOUT:
+			mw.updateWindowLayout()
+
+		case EID_UPDATE_CHART:
+			winapi.InvalidateRect(hWnd, nil, true)
+
+		case EID_WATCH_MOUSE:
+			mw.watchMouse()
+		}
 
 	case winapi.WM_DESTROY:
 		winapi.PostQuitMessage(0)
