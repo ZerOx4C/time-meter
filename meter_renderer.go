@@ -65,6 +65,10 @@ func (mr *MeterRenderer) draw(hWnd winapi.HWND) {
 }
 
 func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC, tasks []Task, now time.Time, futureDuration, pastDuration time.Duration) {
+	if len(tasks) == 0 {
+		return
+	}
+
 	chartBeginAt := now.Add(-pastDuration)
 	chartEndAt := now.Add(futureDuration)
 	totalSeconds := int32((futureDuration + pastDuration) / time.Second)
