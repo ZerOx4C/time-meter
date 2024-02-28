@@ -9,11 +9,13 @@ import (
 )
 
 type App struct {
+	fileWatcher   *FileWatcher
 	meterWindow   *MeterWindow
 	tipWindow     *TipWindow
 	meterRenderer *MeterRenderer
 	tipRenderer   *TipRenderer
 	contextMenu   *PopupMenu
+	tasks         []Task
 }
 
 type MenuId int16
@@ -23,6 +25,8 @@ const (
 	MID_QUIT
 )
 
+const SCHEDULE_FILENAME = "schedule.json"
+
 func (a *App) Run() error {
 	settings := new(Settings)
 	settings.Default()
@@ -30,10 +34,11 @@ func (a *App) Run() error {
 		println(err.Error())
 	}
 
-	tasks, err := a.loadTasks("schedule.json")
-	if err != nil {
+	a.fileWatcher = new(FileWatcher)
+	if err := a.fileWatcher.initialize(); err != nil {
 		return err
 	}
+	defer a.fileWatcher.finalize()
 
 	a.meterWindow = new(MeterWindow)
 	a.meterWindow.settings = settings
@@ -71,7 +76,9 @@ func (a *App) Run() error {
 
 	a.contextMenu.appendStringItem(MID_QUIT, "終了")
 
-	a.meterRenderer.tasks = tasks
+	a.fileWatcher.onFileChanged = func() {
+		a.reloadSchedule()
+	}
 
 	a.meterWindow.onPaint = func() {
 		a.meterRenderer.width = a.meterWindow.bound.width()
@@ -88,7 +95,7 @@ func (a *App) Run() error {
 		focusAt := time.Now().Add(-settings.PastDuration + time.Duration(focusRatio*float64(totalDuration)))
 
 		var focusTasks []Task
-		for _, task := range tasks {
+		for _, task := range a.tasks {
 			if task.overlapWith(focusAt, focusAt) {
 				focusTasks = append(focusTasks, task)
 			}
@@ -130,6 +137,10 @@ func (a *App) Run() error {
 		a.tipRenderer.draw(a.tipWindow.hWnd)
 	}
 
+	a.fileWatcher.filename = SCHEDULE_FILENAME
+	a.fileWatcher.watch()
+
+	a.reloadSchedule()
 	a.meterWindow.show()
 
 	var msg winapi.MSG
@@ -139,6 +150,17 @@ func (a *App) Run() error {
 	}
 
 	return nil
+}
+
+func (a *App) reloadSchedule() {
+	tasks, err := a.loadTasks(SCHEDULE_FILENAME)
+	if err != nil {
+		println(err.Error())
+		return
+	}
+
+	a.tasks = tasks
+	a.meterRenderer.tasks = tasks
 }
 
 func (a *App) loadTasks(filename string) ([]Task, error) {
