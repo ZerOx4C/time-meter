@@ -10,14 +10,17 @@ import (
 )
 
 type TipRenderer struct {
-	settings        *Settings
-	tasks           []Task
-	backgroundBrush winapi.HBRUSH
-	font            winapi.HFONT
+	settings             *Settings
+	tasks                []Task
+	errorMessage         string
+	backgroundBrush      winapi.HBRUSH
+	errorBackgroundBrush winapi.HBRUSH
+	font                 winapi.HFONT
 }
 
 func (tr *TipRenderer) initialize() error {
 	tr.backgroundBrush = winapi.CreateSolidBrush(tr.settings.BackgroundColor)
+	tr.errorBackgroundBrush = winapi.CreateSolidBrush(winapi.RGB(160, 0, 0))
 	tr.font = winapi.CreateFont(
 		15, 0, 0, 0, winapi.FW_NORMAL, 0, 0, 0,
 		winapi.ANSI_CHARSET, winapi.OUT_DEVICE_PRECIS,
@@ -29,6 +32,7 @@ func (tr *TipRenderer) initialize() error {
 
 func (tr *TipRenderer) finalize() error {
 	winapi.DeleteObject(winapi.HGDIOBJ(tr.backgroundBrush))
+	winapi.DeleteObject(winapi.HGDIOBJ(tr.errorBackgroundBrush))
 	winapi.DeleteObject(winapi.HGDIOBJ(tr.font))
 
 	return nil
@@ -41,21 +45,34 @@ func (tr *TipRenderer) draw(hWnd winapi.HWND) {
 	backBuffer := new(BackBuffer)
 	backDc := backBuffer.begin(hWnd, hdc)
 
+	if tr.errorMessage == "" {
+		tr.drawAsTasks(hWnd, backDc, tr.tasks, tr.settings.TipTextColor)
+
+	} else {
+		tr.drawAsMessage(hWnd, backDc, tr.errorMessage)
+	}
+
+	backBuffer.end()
+
+	winapi.EndPaint(hWnd, &paint)
+}
+
+func (tr *TipRenderer) drawAsTasks(hWnd winapi.HWND, hdc winapi.HDC, tasks []Task, tipTextColor winapi.COLORREF) {
 	var clientRect RECT
 	winapi.GetClientRect(hWnd, clientRect.unwrap())
-	winapi.FillRect(backDc, clientRect.unwrap(), tr.backgroundBrush)
+	winapi.FillRect(hdc, clientRect.unwrap(), tr.backgroundBrush)
 
-	winapi.SetBkMode(backDc, winapi.TRANSPARENT)
-	winapi.SelectObject(backDc, winapi.HGDIOBJ(tr.font))
-	winapi.SetTextColor(backDc, tr.settings.TipTextColor)
+	winapi.SetBkMode(hdc, winapi.TRANSPARENT)
+	winapi.SelectObject(hdc, winapi.HGDIOBJ(tr.font))
+	winapi.SetTextColor(hdc, tipTextColor)
 
-	subjectTextPtr, _ := syscall.UTF16PtrFromString(tr.createSubjectText(tr.tasks))
-	timeTextPtr, _ := syscall.UTF16PtrFromString(tr.createTimeText(tr.tasks, time.Now()))
+	subjectTextPtr, _ := syscall.UTF16PtrFromString(tr.createSubjectText(tasks))
+	timeTextPtr, _ := syscall.UTF16PtrFromString(tr.createTimeText(tasks, time.Now()))
 
 	var subjectRect RECT
 	var timeRect RECT
-	winapi.DrawText(backDc, subjectTextPtr, -1, subjectRect.unwrap(), winapi.DT_CALCRECT)
-	winapi.DrawText(backDc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT|winapi.DT_CALCRECT)
+	winapi.DrawText(hdc, subjectTextPtr, -1, subjectRect.unwrap(), winapi.DT_CALCRECT)
+	winapi.DrawText(hdc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT|winapi.DT_CALCRECT)
 
 	const (
 		PADDING_LEFT   = 5
@@ -68,8 +85,8 @@ func (tr *TipRenderer) draw(hWnd winapi.HWND) {
 	subjectRect.translate(PADDING_LEFT, PADDING_TOP)
 	timeRect.translate(subjectRect.Right+MARGIN, PADDING_TOP)
 
-	winapi.DrawText(backDc, subjectTextPtr, -1, subjectRect.unwrap(), 0)
-	winapi.DrawText(backDc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT)
+	winapi.DrawText(hdc, subjectTextPtr, -1, subjectRect.unwrap(), 0)
+	winapi.DrawText(hdc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT)
 
 	winapi.SetWindowPos(
 		hWnd, winapi.HWND_TOPMOST,
@@ -77,10 +94,6 @@ func (tr *TipRenderer) draw(hWnd winapi.HWND) {
 		PADDING_LEFT+subjectRect.width()+MARGIN+timeRect.width()+PADDING_RIGHT,
 		PADDING_TOP+subjectRect.height()+PADDING_BOTTOM,
 		winapi.SWP_NOACTIVATE|winapi.SWP_NOMOVE)
-
-	backBuffer.end()
-
-	winapi.EndPaint(hWnd, &paint)
 }
 
 func (tr *TipRenderer) createSubjectText(sourceTasks []Task) string {
@@ -114,4 +127,37 @@ func (tr *TipRenderer) createTimeText(sourceTasks []Task, now time.Time) string 
 	}
 
 	return ret
+}
+
+func (tr *TipRenderer) drawAsMessage(hWnd winapi.HWND, hdc winapi.HDC, message string) {
+	var clientRect RECT
+	winapi.GetClientRect(hWnd, clientRect.unwrap())
+	winapi.FillRect(hdc, clientRect.unwrap(), tr.errorBackgroundBrush)
+
+	winapi.SetBkMode(hdc, winapi.TRANSPARENT)
+	winapi.SelectObject(hdc, winapi.HGDIOBJ(tr.font))
+	winapi.SetTextColor(hdc, winapi.RGB(255, 255, 255))
+
+	messagePtr, _ := syscall.UTF16PtrFromString(message)
+
+	var messageRect RECT
+	winapi.DrawText(hdc, messagePtr, -1, messageRect.unwrap(), winapi.DT_CALCRECT)
+
+	const (
+		PADDING_LEFT   = 5
+		PADDING_RIGHT  = 5
+		PADDING_TOP    = 2
+		PADDING_BOTTOM = 5
+	)
+
+	messageRect.translate(PADDING_LEFT, PADDING_TOP)
+
+	winapi.DrawText(hdc, messagePtr, -1, messageRect.unwrap(), 0)
+
+	winapi.SetWindowPos(
+		hWnd, winapi.HWND_TOPMOST,
+		0, 0,
+		PADDING_LEFT+messageRect.width()+PADDING_RIGHT,
+		PADDING_TOP+messageRect.height()+PADDING_BOTTOM,
+		winapi.SWP_NOACTIVATE|winapi.SWP_NOMOVE)
 }

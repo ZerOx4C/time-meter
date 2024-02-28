@@ -103,7 +103,11 @@ func (a *App) Run() error {
 
 		a.tipRenderer.tasks = focusTasks
 
-		if 0 < len(focusTasks) {
+		if a.tipRenderer.errorMessage != "" {
+			// NOTE: workaround.
+			a.tipWindow.show()
+
+		} else if 0 < len(focusTasks) {
 			a.tipWindow.show()
 
 		} else {
@@ -155,12 +159,14 @@ func (a *App) Run() error {
 func (a *App) reloadSchedule() {
 	tasks, err := a.loadTasks(SCHEDULE_FILENAME)
 	if err != nil {
-		println(err.Error())
+		a.tipRenderer.errorMessage = "schedule.json の読み込みに失敗しました"
 		return
 	}
 
 	a.tasks = tasks
 	a.meterRenderer.tasks = tasks
+
+	a.tipRenderer.errorMessage = ""
 }
 
 func (a *App) loadTasks(filename string) ([]Task, error) {
