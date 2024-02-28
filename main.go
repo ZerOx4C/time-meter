@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"time"
 
@@ -28,7 +29,7 @@ func run() error {
 		println(err.Error())
 	}
 
-	tasks, err := loadTasks()
+	tasks, err := loadTasks("schedule.json")
 	if err != nil {
 		return err
 	}
@@ -139,30 +140,16 @@ func run() error {
 	return nil
 }
 
-func loadTasks() ([]Task, error) {
+func loadTasks(filename string) ([]Task, error) {
 	ret := []Task{}
 
-	var task Task
+	if file, err := os.Open(filename); err != nil {
+		return nil, err
 
-	task.Subject = "さっき始まったタスク"
-	task.BeginAt = time.Now().Add(time.Minute * -10)
-	task.EndAt = time.Now().Add(time.Minute * 50)
-	ret = append(ret, task)
+	} else if err := json.NewDecoder(file).Decode(&ret); err != nil {
+		return nil, err
 
-	task.Subject = "もうすぐ始まるタスク"
-	task.BeginAt = time.Now().Add(time.Minute * 10)
-	task.EndAt = time.Now().Add(time.Minute * 40)
-	ret = append(ret, task)
-
-	task.Subject = "次の次の隣接タスク"
-	task.BeginAt = time.Now().Add(time.Minute * 40)
-	task.EndAt = time.Now().Add(time.Minute * 70)
-	ret = append(ret, task)
-
-	task.Subject = "さっき終わったタスク"
-	task.BeginAt = time.Now().Add(time.Minute * -80)
-	task.EndAt = time.Now().Add(time.Minute * -20)
-	ret = append(ret, task)
-
-	return ret, nil
+	} else {
+		return ret, nil
+	}
 }
