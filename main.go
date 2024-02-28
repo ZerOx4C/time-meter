@@ -38,29 +38,34 @@ func run() error {
 	if err := meterWindow.initialize(); err != nil {
 		return err
 	}
+	defer meterWindow.finalize()
 
 	tipWindow := new(TipWindow)
 	tipWindow.settings = settings
 	if err := tipWindow.initialize(); err != nil {
 		return err
 	}
+	defer tipWindow.finalize()
 
 	meterRenderer := new(MeterRenderer)
 	meterRenderer.settings = settings
 	if err := meterRenderer.initialize(); err != nil {
 		return err
 	}
+	defer meterRenderer.finalize()
 
 	tipRenderer := new(TipRenderer)
 	tipRenderer.settings = settings
 	if err := tipRenderer.initialize(); err != nil {
 		return err
 	}
+	defer tipRenderer.finalize()
 
 	contextMenu := new(PopupMenu)
 	if err := contextMenu.initialize(); err != nil {
 		return err
 	}
+	defer contextMenu.finalize()
 
 	contextMenu.appendStringItem(MID_QUIT, "終了")
 
@@ -129,26 +134,6 @@ func run() error {
 	for winapi.GetMessage(&msg, 0, 0, 0) != 0 {
 		winapi.TranslateMessage(&msg)
 		winapi.DispatchMessage(&msg)
-	}
-
-	if err := meterWindow.finalize(); err != nil {
-		return err
-	}
-
-	if err := tipWindow.finalize(); err != nil {
-		return err
-	}
-
-	if err := meterRenderer.finalize(); err != nil {
-		return err
-	}
-
-	if err := tipRenderer.finalize(); err != nil {
-		return err
-	}
-
-	if err := contextMenu.finalize(); err != nil {
-		return err
 	}
 
 	return nil
