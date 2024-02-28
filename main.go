@@ -7,6 +7,13 @@ import (
 	"github.com/cwchiu/go-winapi"
 )
 
+type MenuId int16
+
+const (
+	MID_ZERO MenuId = iota
+	MID_QUIT
+)
+
 func main() {
 	if err := run(); err != nil {
 		println(err.Error())
@@ -49,6 +56,13 @@ func run() error {
 	if err := tipRenderer.initialize(); err != nil {
 		return err
 	}
+
+	contextMenu := new(PopupMenu)
+	if err := contextMenu.initialize(); err != nil {
+		return err
+	}
+
+	contextMenu.appendStringItem(MID_QUIT, "終了")
 
 	meterRenderer.tasks = tasks
 
@@ -94,6 +108,17 @@ func run() error {
 		tipWindow.hide()
 	}
 
+	meterWindow.onMouseRightClick = func() {
+		contextMenu.popup(meterWindow.hWnd)
+	}
+
+	meterWindow.onPopupMenuCommand = func() {
+		switch meterWindow.lastMenuId {
+		case MID_QUIT:
+			winapi.SendMessage(meterWindow.hWnd, winapi.WM_CLOSE, 0, 0)
+		}
+	}
+
 	tipWindow.onPaint = func() {
 		tipRenderer.draw(tipWindow.hWnd)
 	}
@@ -119,6 +144,10 @@ func run() error {
 	}
 
 	if err := tipRenderer.finalize(); err != nil {
+		return err
+	}
+
+	if err := contextMenu.finalize(); err != nil {
 		return err
 	}
 

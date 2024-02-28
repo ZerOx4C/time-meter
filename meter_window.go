@@ -10,15 +10,18 @@ import (
 )
 
 type MeterWindow struct {
-	hInstance     winapi.HINSTANCE
-	hWnd          winapi.HWND
-	settings      *Settings
-	bound         RECT
-	lastCursorPos POINT
-	onPaint       EventHandler
-	onMouseMove   EventHandler
-	onMouseEnter  EventHandler
-	onMouseLeave  EventHandler
+	hInstance          winapi.HINSTANCE
+	hWnd               winapi.HWND
+	settings           *Settings
+	bound              RECT
+	lastCursorPos      POINT
+	lastMenuId         MenuId
+	onPaint            EventHandler
+	onMouseMove        EventHandler
+	onMouseEnter       EventHandler
+	onMouseLeave       EventHandler
+	onMouseRightClick  EventHandler
+	onPopupMenuCommand EventHandler
 }
 
 const (
@@ -165,6 +168,18 @@ func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lPa
 
 	case winapi.WM_MOUSEMOVE:
 		mw.onMouseMove.Invoke()
+
+	case winapi.WM_RBUTTONUP:
+		mw.onMouseRightClick.Invoke()
+
+	case winapi.WM_COMMAND:
+		fromMenu := winapi.HIWORD(uint32(wParam)) == 0
+		menuId := MenuId(winapi.LOWORD(uint32(wParam)))
+
+		if fromMenu {
+			mw.lastMenuId = menuId
+			mw.onPopupMenuCommand.Invoke()
+		}
 
 	case winapi.WM_DISPLAYCHANGE:
 		mw.updateLayout()
