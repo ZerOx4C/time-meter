@@ -208,10 +208,10 @@ func (a *App) reloadSchedule() {
 func (a *App) loadTasks(filename string) ([]Task, error) {
 	ret := []Task{}
 
-	if file, err := os.Open(filename); err != nil {
+	if jsonBytes, err := os.ReadFile(filename); err != nil {
 		return nil, err
 
-	} else if err := json.NewDecoder(file).Decode(&ret); err != nil {
+	} else if err := json.NewDecoder(bytes.NewReader(jsonBytes)).Decode(&ret); err != nil {
 		return nil, err
 
 	} else {
