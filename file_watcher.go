@@ -40,7 +40,7 @@ func (fw *FileWatcher) watch() {
 		for {
 			select {
 			case event := <-fw.watcher.Events:
-				if event.Name == fullpath && event.Has(fsnotify.Write) {
+				if event.Name == fullpath {
 					fw.onFileChanged.Invoke()
 				}
 
