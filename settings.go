@@ -11,17 +11,18 @@ import (
 )
 
 type Settings struct {
-	TargetDisplayIndex int
-	MeterWidth         int
-	MeterOpacity       byte
-	PastDuration       time.Duration
-	FutureDuration     time.Duration
-	ScaleInterval      time.Duration
-	BackgroundColor    winapi.COLORREF
-	MainScaleColor     winapi.COLORREF
-	SubScalesColor     winapi.COLORREF
-	ChartColor         winapi.COLORREF
-	TipTextColor       winapi.COLORREF
+	TargetDisplayIndex  int
+	MeterWidth          int
+	MeterOpacity        byte
+	PastDuration        time.Duration
+	FutureDuration      time.Duration
+	ScaleInterval       time.Duration
+	ScheduleEditCommand string
+	BackgroundColor     winapi.COLORREF
+	MainScaleColor      winapi.COLORREF
+	SubScalesColor      winapi.COLORREF
+	ChartColor          winapi.COLORREF
+	TipTextColor        winapi.COLORREF
 }
 
 func (s *Settings) Default() {
@@ -31,6 +32,7 @@ func (s *Settings) Default() {
 	s.PastDuration = time.Hour * 1
 	s.FutureDuration = time.Hour * 3
 	s.ScaleInterval = time.Hour * 1
+	s.ScheduleEditCommand = "notepad"
 	s.BackgroundColor = winapi.RGB(0, 0, 0)
 	s.MainScaleColor = winapi.RGB(255, 255, 255)
 	s.SubScalesColor = winapi.RGB(128, 128, 128)
@@ -46,6 +48,7 @@ func (s *Settings) LoadFile(filename string) error {
 		PastMinutes           *int    `json:"past_minutes,omitempty"`
 		FutureMinutes         *int    `json:"future_minutes,omitempty"`
 		ScaleIntervalMinutes  *int    `json:"scale_interval_minutes,omitempty"`
+		ScheduleEditCommand   *string `json:"schedule_edit_command,omitempty"`
 		BackgroundColorString *string `json:"background_color,omitempty"`
 		MainScaleColorString  *string `json:"main_scale_color,omitempty"`
 		SubScalesColorString  *string `json:"sub_scales_color,omitempty"`
@@ -82,6 +85,10 @@ func (s *Settings) LoadFile(filename string) error {
 
 	if rawSettings.ScaleIntervalMinutes != nil {
 		s.ScaleInterval = time.Minute * time.Duration(*rawSettings.ScaleIntervalMinutes)
+	}
+
+	if rawSettings.ScheduleEditCommand != nil {
+		s.ScheduleEditCommand = *rawSettings.ScheduleEditCommand
 	}
 
 	if rawSettings.BackgroundColorString != nil {

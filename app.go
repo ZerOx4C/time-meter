@@ -2,13 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"os/exec"
+	"syscall"
 	"time"
 
 	"github.com/cwchiu/go-winapi"
 )
 
 type App struct {
+	settings      *Settings
 	fileWatcher   *FileWatcher
 	meterWindow   *MeterWindow
 	tipWindow     *TipWindow
@@ -22,15 +26,18 @@ type MenuId int16
 
 const (
 	MID_ZERO MenuId = iota
+	MID_EDIT_SCHEDULE
 	MID_QUIT
 )
+
+const MB_TOPMOST = 0x00040000
 
 const SCHEDULE_FILENAME = "schedule.json"
 
 func (a *App) Run() error {
-	settings := new(Settings)
-	settings.Default()
-	if err := settings.LoadFile("settings.json"); err != nil {
+	a.settings = new(Settings)
+	a.settings.Default()
+	if err := a.settings.LoadFile("settings.json"); err != nil {
 		println(err.Error())
 	}
 
@@ -41,28 +48,28 @@ func (a *App) Run() error {
 	defer a.fileWatcher.finalize()
 
 	a.meterWindow = new(MeterWindow)
-	a.meterWindow.settings = settings
+	a.meterWindow.settings = a.settings
 	if err := a.meterWindow.initialize(); err != nil {
 		return err
 	}
 	defer a.meterWindow.finalize()
 
 	a.tipWindow = new(TipWindow)
-	a.tipWindow.settings = settings
+	a.tipWindow.settings = a.settings
 	if err := a.tipWindow.initialize(); err != nil {
 		return err
 	}
 	defer a.tipWindow.finalize()
 
 	a.meterRenderer = new(MeterRenderer)
-	a.meterRenderer.settings = settings
+	a.meterRenderer.settings = a.settings
 	if err := a.meterRenderer.initialize(); err != nil {
 		return err
 	}
 	defer a.meterRenderer.finalize()
 
 	a.tipRenderer = new(TipRenderer)
-	a.tipRenderer.settings = settings
+	a.tipRenderer.settings = a.settings
 	if err := a.tipRenderer.initialize(); err != nil {
 		return err
 	}
@@ -74,6 +81,7 @@ func (a *App) Run() error {
 	}
 	defer a.contextMenu.finalize()
 
+	a.contextMenu.appendStringItem(MID_EDIT_SCHEDULE, "スケジュール編集...")
 	a.contextMenu.appendStringItem(MID_QUIT, "終了")
 
 	a.fileWatcher.onFileChanged = func() {
@@ -91,8 +99,8 @@ func (a *App) Run() error {
 		winapi.GetCursorPos(cursorPos.unwrap())
 
 		focusRatio := 1 - float64(cursorPos.Y-a.meterWindow.bound.Top)/float64(a.meterWindow.bound.height())
-		totalDuration := settings.FutureDuration + settings.PastDuration
-		focusAt := time.Now().Add(-settings.PastDuration + time.Duration(focusRatio*float64(totalDuration)))
+		totalDuration := a.settings.FutureDuration + a.settings.PastDuration
+		focusAt := time.Now().Add(-a.settings.PastDuration + time.Duration(focusRatio*float64(totalDuration)))
 
 		var focusTasks []Task
 		for _, task := range a.tasks {
@@ -132,6 +140,9 @@ func (a *App) Run() error {
 
 	a.meterWindow.onPopupMenuCommand = func() {
 		switch a.meterWindow.lastMenuId {
+		case MID_EDIT_SCHEDULE:
+			a.openSchedule()
+
 		case MID_QUIT:
 			winapi.SendMessage(a.meterWindow.hWnd, winapi.WM_CLOSE, 0, 0)
 		}
@@ -154,6 +165,15 @@ func (a *App) Run() error {
 	}
 
 	return nil
+}
+
+func (a *App) openSchedule() {
+	cmd := exec.Command(a.settings.ScheduleEditCommand, SCHEDULE_FILENAME)
+	if err := cmd.Start(); err != nil {
+		captionPtr, _ := syscall.UTF16PtrFromString("time-meter")
+		messagePtr, _ := syscall.UTF16PtrFromString(fmt.Sprintf("エディタを起動できませんでした。\n\n詳細:\n%s", err.Error()))
+		winapi.MessageBox(a.meterWindow.hWnd, messagePtr, captionPtr, winapi.MB_ICONERROR|MB_TOPMOST)
+	}
 }
 
 func (a *App) reloadSchedule() {
