@@ -1,17 +1,20 @@
 package main
 
 import (
+	"bytes"
+	_ "embed"
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/exec"
 	"syscall"
 	"time"
+	"time-meter/textmap"
 
 	"github.com/cwchiu/go-winapi"
 )
 
 type App struct {
+	textMap       textmap.TextMap
 	settings      *Settings
 	fileWatcher   *FileWatcher
 	meterWindow   *MeterWindow
@@ -34,7 +37,15 @@ const MB_TOPMOST = 0x00040000
 
 const SCHEDULE_FILENAME = "schedule.json"
 
+//go:embed embed/text.json
+var embedTextJson []byte
+
 func (a *App) Run() error {
+	a.textMap = textmap.New()
+	if err := a.textMap.LoadJson(bytes.NewReader(embedTextJson)); err != nil {
+		return err
+	}
+
 	a.settings = new(Settings)
 	a.settings.Default()
 	if err := a.settings.LoadFile("settings.json"); err != nil {
@@ -69,6 +80,7 @@ func (a *App) Run() error {
 	defer a.meterRenderer.finalize()
 
 	a.tipRenderer = new(TipRenderer)
+	a.tipRenderer.textMap = a.textMap
 	a.tipRenderer.settings = a.settings
 	if err := a.tipRenderer.initialize(); err != nil {
 		return err
@@ -81,8 +93,8 @@ func (a *App) Run() error {
 	}
 	defer a.contextMenu.finalize()
 
-	a.contextMenu.appendStringItem(MID_EDIT_SCHEDULE, "スケジュール編集...")
-	a.contextMenu.appendStringItem(MID_QUIT, "終了")
+	a.contextMenu.appendStringItem(MID_EDIT_SCHEDULE, a.textMap.Of("VERB_EDIT_SCHEDULE").String())
+	a.contextMenu.appendStringItem(MID_QUIT, a.textMap.Of("VERB_QUIT").String())
 
 	a.fileWatcher.onFileChanged = func() {
 		a.reloadSchedule()
@@ -170,8 +182,10 @@ func (a *App) Run() error {
 func (a *App) openSchedule() {
 	cmd := exec.Command(a.settings.ScheduleEditCommand, SCHEDULE_FILENAME)
 	if err := cmd.Start(); err != nil {
-		captionPtr, _ := syscall.UTF16PtrFromString("time-meter")
-		messagePtr, _ := syscall.UTF16PtrFromString(fmt.Sprintf("エディタを起動できませんでした。\n\n詳細:\n%s", err.Error()))
+		captionPtr, _ := syscall.UTF16PtrFromString(a.textMap.Of("NOUN_TIME_METER").String())
+		messagePtr, _ := syscall.UTF16PtrFromString(a.textMap.Of("NOTIFY_FAILED_COMMAND_EDIT_SCHEDULE").
+			Set("detail", err.Error()).
+			String())
 		winapi.MessageBox(a.meterWindow.hWnd, messagePtr, captionPtr, winapi.MB_ICONERROR|MB_TOPMOST)
 	}
 }
@@ -179,7 +193,9 @@ func (a *App) openSchedule() {
 func (a *App) reloadSchedule() {
 	tasks, err := a.loadTasks(SCHEDULE_FILENAME)
 	if err != nil {
-		a.tipRenderer.errorMessage = "schedule.json の読み込みに失敗しました"
+		a.tipRenderer.errorMessage = a.textMap.Of("NOTIFY_FAILED_SCHEDULE").
+			Set("filename", SCHEDULE_FILENAME).
+			String()
 		return
 	}
 

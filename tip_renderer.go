@@ -1,15 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"math"
 	"syscall"
 	"time"
+	"time-meter/textmap"
 
 	"github.com/cwchiu/go-winapi"
 )
 
 type TipRenderer struct {
+	textMap              textmap.TextMap
 	settings             *Settings
 	tasks                []Task
 	errorMessage         string
@@ -119,10 +120,14 @@ func (tr *TipRenderer) createTimeText(sourceTasks []Task, now time.Time) string 
 		}
 
 		if now.Before(task.BeginAt) {
-			ret += fmt.Sprintf("%d分後", int(math.Ceil(task.BeginAt.Sub(now).Minutes())))
+			ret += tr.textMap.Of("INDICATOR_AFTER_MINUTES").
+				SetInt("minutes", int(math.Ceil(task.BeginAt.Sub(now).Minutes()))).
+				String()
 
 		} else if now.Before(task.EndAt) {
-			ret += fmt.Sprintf("あと%d分", int(math.Ceil(task.EndAt.Sub(now).Minutes())))
+			ret += tr.textMap.Of("INDICATOR_REMAINING_MINUTES").
+				SetInt("minutes", int(math.Ceil(task.EndAt.Sub(now).Minutes()))).
+				String()
 		}
 	}
 
