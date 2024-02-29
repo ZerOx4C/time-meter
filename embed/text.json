@@ -3,7 +3,8 @@
 	"VERB_EDIT_SCHEDULE": "スケジュール編集...",
 	"VERB_QUIT": "終了",
 	"NOTIFY_FAILED_SCHEDULE": "{{filename}} の読み込みに失敗しました",
-	"NOTIFY_FAILED_COMMAND_EDIT_SCHEDULE": "エディタを起動できませんでした。\n\n詳細:\n{{detail}}",
+	"NOTIFY_FAILED_OPERATION": "操作に失敗しました。\n\n詳細:\n{{detail}}",
 	"INDICATOR_AFTER_MINUTES": "{{minutes}}分後",
-	"INDICATOR_REMAINING_MINUTES": "あと{{minutes}}分"
+	"INDICATOR_REMAINING_MINUTES": "あと{{minutes}}分",
+	"NOUN_SAMPLE_TASK": "サンプル"
 }

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
-	"syscall"
 	"time"
 	"time-meter/textmap"
 
@@ -153,7 +153,15 @@ func (a *App) Run() error {
 	a.meterWindow.onPopupMenuCommand = func() {
 		switch a.meterWindow.lastMenuId {
 		case MID_EDIT_SCHEDULE:
-			a.openSchedule()
+			if err := a.handleEditSchedule(); err != nil {
+				showErrorMessageBox(
+					a.meterWindow.hWnd,
+					a.textMap.Of("NOUN_TIME_METER").String(),
+					a.textMap.Of("NOTIFY_FAILED_OPERATION").
+						Set("detail", err.Error()).
+						String(),
+				)
+			}
 
 		case MID_QUIT:
 			winapi.SendMessage(a.meterWindow.hWnd, winapi.WM_CLOSE, 0, 0)
@@ -179,15 +187,26 @@ func (a *App) Run() error {
 	return nil
 }
 
-func (a *App) openSchedule() {
+func (a *App) handleEditSchedule() error {
+	if fileInfo, err := os.Stat(SCHEDULE_FILENAME); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+
+		if err := a.saveTemplateTasks(SCHEDULE_FILENAME); err != nil {
+			return err
+		}
+
+	} else if fileInfo.IsDir() {
+		return fmt.Errorf(`"%s" is a directory`, SCHEDULE_FILENAME)
+	}
+
 	cmd := exec.Command(a.settings.ScheduleEditCommand, SCHEDULE_FILENAME)
 	if err := cmd.Start(); err != nil {
-		captionPtr, _ := syscall.UTF16PtrFromString(a.textMap.Of("NOUN_TIME_METER").String())
-		messagePtr, _ := syscall.UTF16PtrFromString(a.textMap.Of("NOTIFY_FAILED_COMMAND_EDIT_SCHEDULE").
-			Set("detail", err.Error()).
-			String())
-		winapi.MessageBox(a.meterWindow.hWnd, messagePtr, captionPtr, winapi.MB_ICONERROR|MB_TOPMOST)
+		return err
 	}
+
+	return nil
 }
 
 func (a *App) reloadSchedule() {
@@ -205,6 +224,14 @@ func (a *App) reloadSchedule() {
 	a.tipRenderer.errorMessage = ""
 }
 
+func (a *App) saveTemplateTasks(filename string) error {
+	task := Task{}
+	task.Subject = a.textMap.Of("NOUN_SAMPLE_TASK").String()
+	task.BeginAt = time.Now().Truncate(time.Minute).Add(time.Minute * 3)
+	task.EndAt = task.BeginAt.Add(time.Hour)
+	return a.saveTasks(filename, []Task{task})
+}
+
 func (a *App) loadTasks(filename string) ([]Task, error) {
 	ret := []Task{}
 
@@ -216,5 +243,23 @@ func (a *App) loadTasks(filename string) ([]Task, error) {
 
 	} else {
 		return ret, nil
+	}
+}
+
+func (a *App) saveTasks(filename string, tasks []Task) error {
+	jsonBuffer := bytes.NewBuffer(nil)
+
+	encoder := json.NewEncoder(jsonBuffer)
+	encoder.SetIndent("", "\t")
+	encoder.SetEscapeHTML(false)
+
+	if err := encoder.Encode(tasks); err != nil {
+		return err
+
+	} else if err := os.WriteFile(filename, jsonBuffer.Bytes(), os.ModePerm); err != nil {
+		return err
+
+	} else {
+		return nil
 	}
 }
