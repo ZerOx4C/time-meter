@@ -10,7 +10,7 @@ type Task struct {
 	EndAt   time.Time `json:"end_at"`
 }
 
-func (t *Task) overlapWith(beginAt time.Time, endAt time.Time) bool {
+func (t *Task) OverlapWith(beginAt time.Time, endAt time.Time) bool {
 	if beginAt.Before(t.EndAt) && t.BeginAt.Before(endAt) {
 		return true
 	}

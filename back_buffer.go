@@ -21,10 +21,10 @@ func (bb *BackBuffer) begin(hWnd winapi.HWND, hdc winapi.HDC) winapi.HDC {
 	}
 
 	bb.frontDc = hdc
-	winapi.GetClientRect(hWnd, bb.clientRect.unwrap())
+	winapi.GetClientRect(hWnd, bb.clientRect.Unwrap())
 
 	bb.backDc = winapi.CreateCompatibleDC(hdc)
-	bb.backBitmap = winapi2.CreateCompatibleBitmap(hdc, bb.clientRect.width(), bb.clientRect.height())
+	bb.backBitmap = winapi2.CreateCompatibleBitmap(hdc, bb.clientRect.Width(), bb.clientRect.Height())
 	bb.oldBackBitmap = winapi.SelectObject(bb.backDc, winapi.HGDIOBJ(bb.backBitmap))
 	bb.began = true
 
@@ -37,7 +37,7 @@ func (bb *BackBuffer) end() {
 	}
 
 	winapi.BitBlt(
-		bb.frontDc, 0, 0, bb.clientRect.width(), bb.clientRect.height(),
+		bb.frontDc, 0, 0, bb.clientRect.Width(), bb.clientRect.Height(),
 		bb.backDc, 0, 0,
 		winapi.SRCCOPY)
 

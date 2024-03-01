@@ -19,7 +19,7 @@ type TipRenderer struct {
 	font                 winapi.HFONT
 }
 
-func (tr *TipRenderer) initialize() error {
+func (tr *TipRenderer) Initialize() error {
 	tr.backgroundBrush = winapi.CreateSolidBrush(tr.settings.BackgroundColor)
 	tr.errorBackgroundBrush = winapi.CreateSolidBrush(winapi.RGB(160, 0, 0))
 	tr.font = winapi.CreateFont(
@@ -31,7 +31,7 @@ func (tr *TipRenderer) initialize() error {
 	return nil
 }
 
-func (tr *TipRenderer) finalize() error {
+func (tr *TipRenderer) Finalize() error {
 	winapi.DeleteObject(winapi.HGDIOBJ(tr.backgroundBrush))
 	winapi.DeleteObject(winapi.HGDIOBJ(tr.errorBackgroundBrush))
 	winapi.DeleteObject(winapi.HGDIOBJ(tr.font))
@@ -39,7 +39,7 @@ func (tr *TipRenderer) finalize() error {
 	return nil
 }
 
-func (tr *TipRenderer) draw(hWnd winapi.HWND) {
+func (tr *TipRenderer) Draw(hWnd winapi.HWND) {
 	var paint winapi.PAINTSTRUCT
 	hdc := winapi.BeginPaint(hWnd, &paint)
 
@@ -60,8 +60,8 @@ func (tr *TipRenderer) draw(hWnd winapi.HWND) {
 
 func (tr *TipRenderer) drawAsTasks(hWnd winapi.HWND, hdc winapi.HDC, tasks []Task, tipTextColor winapi.COLORREF) {
 	var clientRect RECT
-	winapi.GetClientRect(hWnd, clientRect.unwrap())
-	winapi.FillRect(hdc, clientRect.unwrap(), tr.backgroundBrush)
+	winapi.GetClientRect(hWnd, clientRect.Unwrap())
+	winapi.FillRect(hdc, clientRect.Unwrap(), tr.backgroundBrush)
 
 	winapi.SetBkMode(hdc, winapi.TRANSPARENT)
 	winapi.SelectObject(hdc, winapi.HGDIOBJ(tr.font))
@@ -72,8 +72,8 @@ func (tr *TipRenderer) drawAsTasks(hWnd winapi.HWND, hdc winapi.HDC, tasks []Tas
 
 	var subjectRect RECT
 	var timeRect RECT
-	winapi.DrawText(hdc, subjectTextPtr, -1, subjectRect.unwrap(), winapi.DT_CALCRECT)
-	winapi.DrawText(hdc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT|winapi.DT_CALCRECT)
+	winapi.DrawText(hdc, subjectTextPtr, -1, subjectRect.Unwrap(), winapi.DT_CALCRECT)
+	winapi.DrawText(hdc, timeTextPtr, -1, timeRect.Unwrap(), winapi.DT_RIGHT|winapi.DT_CALCRECT)
 
 	const (
 		PADDING_LEFT   = 5
@@ -83,17 +83,17 @@ func (tr *TipRenderer) drawAsTasks(hWnd winapi.HWND, hdc winapi.HDC, tasks []Tas
 		MARGIN         = 10
 	)
 
-	subjectRect.translate(PADDING_LEFT, PADDING_TOP)
-	timeRect.translate(subjectRect.Right+MARGIN, PADDING_TOP)
+	subjectRect.Translate(PADDING_LEFT, PADDING_TOP)
+	timeRect.Translate(subjectRect.Right+MARGIN, PADDING_TOP)
 
-	winapi.DrawText(hdc, subjectTextPtr, -1, subjectRect.unwrap(), 0)
-	winapi.DrawText(hdc, timeTextPtr, -1, timeRect.unwrap(), winapi.DT_RIGHT)
+	winapi.DrawText(hdc, subjectTextPtr, -1, subjectRect.Unwrap(), 0)
+	winapi.DrawText(hdc, timeTextPtr, -1, timeRect.Unwrap(), winapi.DT_RIGHT)
 
 	winapi.SetWindowPos(
 		hWnd, winapi.HWND_TOPMOST,
 		0, 0,
-		PADDING_LEFT+subjectRect.width()+MARGIN+timeRect.width()+PADDING_RIGHT,
-		PADDING_TOP+subjectRect.height()+PADDING_BOTTOM,
+		PADDING_LEFT+subjectRect.Width()+MARGIN+timeRect.Width()+PADDING_RIGHT,
+		PADDING_TOP+subjectRect.Height()+PADDING_BOTTOM,
 		winapi.SWP_NOACTIVATE|winapi.SWP_NOMOVE)
 }
 
@@ -136,8 +136,8 @@ func (tr *TipRenderer) createTimeText(sourceTasks []Task, now time.Time) string 
 
 func (tr *TipRenderer) drawAsMessage(hWnd winapi.HWND, hdc winapi.HDC, message string) {
 	var clientRect RECT
-	winapi.GetClientRect(hWnd, clientRect.unwrap())
-	winapi.FillRect(hdc, clientRect.unwrap(), tr.errorBackgroundBrush)
+	winapi.GetClientRect(hWnd, clientRect.Unwrap())
+	winapi.FillRect(hdc, clientRect.Unwrap(), tr.errorBackgroundBrush)
 
 	winapi.SetBkMode(hdc, winapi.TRANSPARENT)
 	winapi.SelectObject(hdc, winapi.HGDIOBJ(tr.font))
@@ -146,7 +146,7 @@ func (tr *TipRenderer) drawAsMessage(hWnd winapi.HWND, hdc winapi.HDC, message s
 	messagePtr, _ := syscall.UTF16PtrFromString(message)
 
 	var messageRect RECT
-	winapi.DrawText(hdc, messagePtr, -1, messageRect.unwrap(), winapi.DT_CALCRECT)
+	winapi.DrawText(hdc, messagePtr, -1, messageRect.Unwrap(), winapi.DT_CALCRECT)
 
 	const (
 		PADDING_LEFT   = 5
@@ -155,14 +155,14 @@ func (tr *TipRenderer) drawAsMessage(hWnd winapi.HWND, hdc winapi.HDC, message s
 		PADDING_BOTTOM = 5
 	)
 
-	messageRect.translate(PADDING_LEFT, PADDING_TOP)
+	messageRect.Translate(PADDING_LEFT, PADDING_TOP)
 
-	winapi.DrawText(hdc, messagePtr, -1, messageRect.unwrap(), 0)
+	winapi.DrawText(hdc, messagePtr, -1, messageRect.Unwrap(), 0)
 
 	winapi.SetWindowPos(
 		hWnd, winapi.HWND_TOPMOST,
 		0, 0,
-		PADDING_LEFT+messageRect.width()+PADDING_RIGHT,
-		PADDING_TOP+messageRect.height()+PADDING_BOTTOM,
+		PADDING_LEFT+messageRect.Width()+PADDING_RIGHT,
+		PADDING_TOP+messageRect.Height()+PADDING_BOTTOM,
 		winapi.SWP_NOACTIVATE|winapi.SWP_NOMOVE)
 }

@@ -13,7 +13,7 @@ type FileWatcher struct {
 	onFileChanged EventHandler
 }
 
-func (fw *FileWatcher) initialize() error {
+func (fw *FileWatcher) Initialize() error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
@@ -24,7 +24,7 @@ func (fw *FileWatcher) initialize() error {
 	return nil
 }
 
-func (fw *FileWatcher) watch() {
+func (fw *FileWatcher) Watch() {
 	if fw.busy {
 		panic("invalid operation.")
 	}
@@ -50,7 +50,7 @@ func (fw *FileWatcher) watch() {
 	}()
 }
 
-func (fw *FileWatcher) finalize() error {
+func (fw *FileWatcher) Finalize() error {
 	if err := fw.watcher.Close(); err != nil {
 		return err
 	}

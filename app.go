@@ -53,70 +53,70 @@ func (a *App) Run() error {
 	}
 
 	a.fileWatcher = new(FileWatcher)
-	if err := a.fileWatcher.initialize(); err != nil {
+	if err := a.fileWatcher.Initialize(); err != nil {
 		return err
 	}
-	defer a.fileWatcher.finalize()
+	defer a.fileWatcher.Finalize()
 
 	a.meterWindow = new(MeterWindow)
 	a.meterWindow.settings = a.settings
-	if err := a.meterWindow.initialize(); err != nil {
+	if err := a.meterWindow.Initialize(); err != nil {
 		return err
 	}
-	defer a.meterWindow.finalize()
+	defer a.meterWindow.Finalize()
 
 	a.tipWindow = new(TipWindow)
 	a.tipWindow.settings = a.settings
-	if err := a.tipWindow.initialize(); err != nil {
+	if err := a.tipWindow.Initialize(); err != nil {
 		return err
 	}
-	defer a.tipWindow.finalize()
+	defer a.tipWindow.Finalize()
 
 	a.meterRenderer = new(MeterRenderer)
 	a.meterRenderer.settings = a.settings
-	if err := a.meterRenderer.initialize(); err != nil {
+	if err := a.meterRenderer.Initialize(); err != nil {
 		return err
 	}
-	defer a.meterRenderer.finalize()
+	defer a.meterRenderer.Finalize()
 
 	a.tipRenderer = new(TipRenderer)
 	a.tipRenderer.textMap = a.textMap
 	a.tipRenderer.settings = a.settings
-	if err := a.tipRenderer.initialize(); err != nil {
+	if err := a.tipRenderer.Initialize(); err != nil {
 		return err
 	}
-	defer a.tipRenderer.finalize()
+	defer a.tipRenderer.Finalize()
 
 	a.contextMenu = new(PopupMenu)
-	if err := a.contextMenu.initialize(); err != nil {
+	if err := a.contextMenu.Initialize(); err != nil {
 		return err
 	}
-	defer a.contextMenu.finalize()
+	defer a.contextMenu.Finalize()
 
-	a.contextMenu.appendStringItem(MID_EDIT_SCHEDULE, a.textMap.Of("VERB_EDIT_SCHEDULE").String())
-	a.contextMenu.appendStringItem(MID_QUIT, a.textMap.Of("VERB_QUIT").String())
+	a.contextMenu.AppendStringItem(MID_EDIT_SCHEDULE, a.textMap.Of("VERB_EDIT_SCHEDULE").String())
+	a.contextMenu.AppendStringItem(MID_QUIT, a.textMap.Of("VERB_QUIT").String())
 
 	a.fileWatcher.onFileChanged = func() {
 		a.reloadSchedule()
 	}
 
 	a.meterWindow.onPaint = func() {
-		a.meterRenderer.width = a.meterWindow.bound.width()
-		a.meterRenderer.height = a.meterWindow.bound.height()
-		a.meterRenderer.draw(a.meterWindow.hWnd)
+		a.meterRenderer.width = a.meterWindow.bound.Width()
+		a.meterRenderer.height = a.meterWindow.bound.Height()
+		a.meterRenderer.Draw(a.meterWindow.hWnd)
 	}
 
 	a.meterWindow.onMouseMove = func() {
 		var cursorPos POINT
-		winapi.GetCursorPos(cursorPos.unwrap())
+		winapi.GetCursorPos(cursorPos.Unwrap())
 
-		focusRatio := 1 - float64(cursorPos.Y-a.meterWindow.bound.Top)/float64(a.meterWindow.bound.height())
+		focusRatio := 1 - float64(cursorPos.Y-a.meterWindow.bound.Top)/float64(a.meterWindow.bound.Height())
 		totalDuration := a.settings.FutureDuration + a.settings.PastDuration
 		focusAt := time.Now().Add(-a.settings.PastDuration + time.Duration(focusRatio*float64(totalDuration)))
 
 		var focusTasks []Task
 		for _, task := range a.tasks {
-			if task.overlapWith(focusAt, focusAt) {
+			if task.OverlapWith(focusAt, focusAt) {
 				focusTasks = append(focusTasks, task)
 			}
 		}
@@ -125,29 +125,29 @@ func (a *App) Run() error {
 
 		if a.tipRenderer.errorMessage != "" {
 			// NOTE: workaround.
-			a.tipWindow.show()
+			a.tipWindow.Show()
 
 		} else if 0 < len(focusTasks) {
-			a.tipWindow.show()
+			a.tipWindow.Show()
 
 		} else {
-			a.tipWindow.hide()
+			a.tipWindow.Hide()
 		}
 
 		a.tipWindow.boundLeft = a.meterWindow.bound.Right
-		a.tipWindow.update()
+		a.tipWindow.Update()
 	}
 
 	a.meterWindow.onMouseEnter = func() {
-		a.tipWindow.show()
+		a.tipWindow.Show()
 	}
 
 	a.meterWindow.onMouseLeave = func() {
-		a.tipWindow.hide()
+		a.tipWindow.Hide()
 	}
 
 	a.meterWindow.onMouseRightClick = func() {
-		a.contextMenu.popup(a.meterWindow.hWnd)
+		a.contextMenu.Popup(a.meterWindow.hWnd)
 	}
 
 	a.meterWindow.onPopupMenuCommand = func() {
@@ -169,14 +169,14 @@ func (a *App) Run() error {
 	}
 
 	a.tipWindow.onPaint = func() {
-		a.tipRenderer.draw(a.tipWindow.hWnd)
+		a.tipRenderer.Draw(a.tipWindow.hWnd)
 	}
 
 	a.fileWatcher.filename = SCHEDULE_FILENAME
-	a.fileWatcher.watch()
+	a.fileWatcher.Watch()
 
 	a.reloadSchedule()
-	a.meterWindow.show()
+	a.meterWindow.Show()
 
 	var msg winapi.MSG
 	for winapi.GetMessage(&msg, 0, 0, 0) != 0 {

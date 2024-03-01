@@ -29,7 +29,7 @@ const (
 	EID_WATCH_MOUSE
 )
 
-func (mw *MeterWindow) initialize() error {
+func (mw *MeterWindow) Initialize() error {
 	hInstance := winapi.GetModuleHandle(nil)
 	windowClass := mw.createWindowClass(hInstance)
 
@@ -48,11 +48,11 @@ func (mw *MeterWindow) initialize() error {
 	return nil
 }
 
-func (mw *MeterWindow) finalize() error {
+func (mw *MeterWindow) Finalize() error {
 	return nil
 }
 
-func (mw *MeterWindow) show() {
+func (mw *MeterWindow) Show() {
 	winapi.ShowWindow(mw.hWnd, winapi.SW_SHOW)
 	mw.updateLayout()
 
@@ -109,8 +109,8 @@ func (mw *MeterWindow) updateLayout() {
 		winapi.HWND_TOPMOST,
 		mw.bound.Left,
 		mw.bound.Top,
-		mw.bound.width(),
-		mw.bound.height(),
+		mw.bound.Width(),
+		mw.bound.Height(),
 		winapi.SWP_NOACTIVATE)
 }
 
@@ -141,10 +141,10 @@ func (mw *MeterWindow) getMonitorRectList() []RECT {
 
 func (mw *MeterWindow) watchMouse() {
 	var currentCursorPos POINT
-	winapi.GetCursorPos(currentCursorPos.unwrap())
+	winapi.GetCursorPos(currentCursorPos.Unwrap())
 
-	isHit := mw.bound.contains(currentCursorPos)
-	wasHit := mw.bound.contains(mw.lastCursorPos)
+	isHit := mw.bound.Contains(currentCursorPos)
+	wasHit := mw.bound.Contains(mw.lastCursorPos)
 	mw.lastCursorPos = currentCursorPos
 
 	if isHit == wasHit {

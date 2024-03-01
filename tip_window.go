@@ -16,7 +16,7 @@ type TipWindow struct {
 	onPaint   EventHandler
 }
 
-func (tw *TipWindow) initialize() error {
+func (tw *TipWindow) Initialize() error {
 	hInstance := winapi.GetModuleHandle(nil)
 	windowClass := tw.createWindowClass(hInstance)
 
@@ -35,19 +35,19 @@ func (tw *TipWindow) initialize() error {
 	return nil
 }
 
-func (tw *TipWindow) finalize() error {
+func (tw *TipWindow) Finalize() error {
 	return nil
 }
 
-func (tw *TipWindow) show() {
+func (tw *TipWindow) Show() {
 	winapi.ShowWindow(tw.hWnd, winapi.SW_SHOW)
 }
 
-func (tw *TipWindow) hide() {
+func (tw *TipWindow) Hide() {
 	winapi.ShowWindow(tw.hWnd, winapi.SW_HIDE)
 }
 
-func (tw *TipWindow) update() {
+func (tw *TipWindow) Update() {
 	var pos winapi.POINT
 	winapi.GetCursorPos(&pos)
 

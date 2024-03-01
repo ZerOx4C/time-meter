@@ -17,7 +17,7 @@ type MeterRenderer struct {
 	chartBrush      winapi.HBRUSH
 }
 
-func (mr *MeterRenderer) initialize() error {
+func (mr *MeterRenderer) Initialize() error {
 	mr.backgroundBrush = winapi.CreateSolidBrush(mr.settings.BackgroundColor)
 	mr.headPen = winapi.CreatePen(winapi.PS_SOLID, 1, mr.settings.MainScaleColor)
 	mr.hourPen = winapi.CreatePen(winapi.PS_SOLID, 1, mr.settings.SubScalesColor)
@@ -26,7 +26,7 @@ func (mr *MeterRenderer) initialize() error {
 	return nil
 }
 
-func (mr *MeterRenderer) finalize() error {
+func (mr *MeterRenderer) Finalize() error {
 	winapi.DeleteObject(winapi.HGDIOBJ(mr.backgroundBrush))
 	winapi.DeleteObject(winapi.HGDIOBJ(mr.headPen))
 	winapi.DeleteObject(winapi.HGDIOBJ(mr.hourPen))
@@ -35,7 +35,7 @@ func (mr *MeterRenderer) finalize() error {
 	return nil
 }
 
-func (mr *MeterRenderer) draw(hWnd winapi.HWND) {
+func (mr *MeterRenderer) Draw(hWnd winapi.HWND) {
 	var paint winapi.PAINTSTRUCT
 	hdc := winapi.BeginPaint(hWnd, &paint)
 
@@ -43,8 +43,8 @@ func (mr *MeterRenderer) draw(hWnd winapi.HWND) {
 	backDc := backBuffer.begin(hWnd, hdc)
 
 	var clientRect RECT
-	winapi.GetClientRect(hWnd, clientRect.unwrap())
-	winapi.FillRect(backDc, clientRect.unwrap(), mr.backgroundBrush)
+	winapi.GetClientRect(hWnd, clientRect.Unwrap())
+	winapi.FillRect(backDc, clientRect.Unwrap(), mr.backgroundBrush)
 
 	mr.drawAllCharts(backDc,
 		mr.tasks,
@@ -72,7 +72,7 @@ func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC, tasks []Task, now time.Ti
 	tracks := [][]Task{}
 
 	for _, task := range tasks {
-		if !task.overlapWith(chartBeginAt, chartEndAt) {
+		if !task.OverlapWith(chartBeginAt, chartEndAt) {
 			continue
 		}
 
@@ -111,7 +111,7 @@ func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC, tasks []Task, now time.Ti
 
 func (mr *MeterRenderer) isTaskConflict(tasks []Task, desiredTask Task) bool {
 	for _, task := range tasks {
-		if task.overlapWith(desiredTask.BeginAt, desiredTask.EndAt) {
+		if task.OverlapWith(desiredTask.BeginAt, desiredTask.EndAt) {
 			return true
 		}
 	}
@@ -119,7 +119,7 @@ func (mr *MeterRenderer) isTaskConflict(tasks []Task, desiredTask Task) bool {
 }
 
 func (mr *MeterRenderer) drawChart(hdc winapi.HDC, rect *RECT) {
-	winapi.FillRect(hdc, rect.unwrap(), mr.chartBrush)
+	winapi.FillRect(hdc, rect.Unwrap(), mr.chartBrush)
 }
 
 func (mr *MeterRenderer) drawAllScaleLines(hdc winapi.HDC, futureDuration, pastDuration, interval time.Duration) {
