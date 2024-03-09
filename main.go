@@ -23,8 +23,6 @@ const (
 	MID_QUIT
 )
 
-const MB_TOPMOST = 0x00040000
-
 const SCHEDULE_FILENAME = "schedule.json"
 const SETTINGS_FILENAME = "settings.json"
 

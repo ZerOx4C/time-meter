@@ -10,6 +10,7 @@ import (
 const (
 	LWA_COLORKEY = 0x00000001
 	LWA_ALPHA    = 0x00000002
+	MB_TOPMOST   = 0x00040000
 )
 
 var (
