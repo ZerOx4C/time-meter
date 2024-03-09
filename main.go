@@ -10,6 +10,7 @@ import (
 	"time"
 	"time-meter/setting"
 	"time-meter/textmap"
+	"time-meter/wrapped"
 
 	"github.com/cwchiu/go-winapi"
 )
@@ -79,7 +80,7 @@ func run() error {
 	}
 
 	meterWindow.onMouseMove = func() {
-		var cursorPos POINT
+		var cursorPos wrapped.POINT
 		winapi.GetCursorPos(cursorPos.Unwrap())
 
 		focusRatio := 1 - float64(cursorPos.Y-meterWindow.bound.Top)/float64(meterWindow.bound.Height())

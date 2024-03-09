@@ -3,6 +3,7 @@ package main
 import (
 	"time"
 	"time-meter/setting"
+	"time-meter/wrapped"
 
 	"github.com/cwchiu/go-winapi"
 )
@@ -43,7 +44,7 @@ func (mr *MeterRenderer) Draw(hWnd winapi.HWND) {
 	backBuffer := new(BackBuffer)
 	backDc := backBuffer.begin(hWnd, hdc)
 
-	var clientRect RECT
+	var clientRect wrapped.RECT
 	winapi.GetClientRect(hWnd, clientRect.Unwrap())
 	winapi.FillRect(backDc, clientRect.Unwrap(), mr.backgroundBrush)
 
@@ -100,7 +101,7 @@ func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC, tasks []Task, now time.Ti
 
 	for trackIndex, track := range tracks {
 		for _, task := range track {
-			var rect RECT
+			var rect wrapped.RECT
 			rect.Left = int32(trackIndex*trackWidth) + 1
 			rect.Right = rect.Left + int32(trackWidth) - 2
 			rect.Top = mr.height - mr.height*int32(task.EndAt.Sub(chartBeginAt)/time.Second)/totalSeconds + 1
@@ -119,7 +120,7 @@ func (mr *MeterRenderer) isTaskConflict(tasks []Task, desiredTask Task) bool {
 	return false
 }
 
-func (mr *MeterRenderer) drawChart(hdc winapi.HDC, rect *RECT) {
+func (mr *MeterRenderer) drawChart(hdc winapi.HDC, rect *wrapped.RECT) {
 	winapi.FillRect(hdc, rect.Unwrap(), mr.chartBrush)
 }
 

@@ -6,6 +6,7 @@ import (
 	"time"
 	"time-meter/setting"
 	"time-meter/textmap"
+	"time-meter/wrapped"
 
 	"github.com/cwchiu/go-winapi"
 )
@@ -60,7 +61,7 @@ func (tr *TipRenderer) Draw(hWnd winapi.HWND) {
 }
 
 func (tr *TipRenderer) drawAsTasks(hWnd winapi.HWND, hdc winapi.HDC, tasks []Task, tipTextColor winapi.COLORREF) {
-	var clientRect RECT
+	var clientRect wrapped.RECT
 	winapi.GetClientRect(hWnd, clientRect.Unwrap())
 	winapi.FillRect(hdc, clientRect.Unwrap(), tr.backgroundBrush)
 
@@ -71,8 +72,8 @@ func (tr *TipRenderer) drawAsTasks(hWnd winapi.HWND, hdc winapi.HDC, tasks []Tas
 	subjectTextPtr, _ := syscall.UTF16PtrFromString(tr.createSubjectText(tasks))
 	timeTextPtr, _ := syscall.UTF16PtrFromString(tr.createTimeText(tasks, time.Now()))
 
-	var subjectRect RECT
-	var timeRect RECT
+	var subjectRect wrapped.RECT
+	var timeRect wrapped.RECT
 	winapi.DrawText(hdc, subjectTextPtr, -1, subjectRect.Unwrap(), winapi.DT_CALCRECT)
 	winapi.DrawText(hdc, timeTextPtr, -1, timeRect.Unwrap(), winapi.DT_RIGHT|winapi.DT_CALCRECT)
 
@@ -136,7 +137,7 @@ func (tr *TipRenderer) createTimeText(sourceTasks []Task, now time.Time) string 
 }
 
 func (tr *TipRenderer) drawAsMessage(hWnd winapi.HWND, hdc winapi.HDC, message string) {
-	var clientRect RECT
+	var clientRect wrapped.RECT
 	winapi.GetClientRect(hWnd, clientRect.Unwrap())
 	winapi.FillRect(hdc, clientRect.Unwrap(), tr.errorBackgroundBrush)
 
@@ -146,7 +147,7 @@ func (tr *TipRenderer) drawAsMessage(hWnd winapi.HWND, hdc winapi.HDC, message s
 
 	messagePtr, _ := syscall.UTF16PtrFromString(message)
 
-	var messageRect RECT
+	var messageRect wrapped.RECT
 	winapi.DrawText(hdc, messagePtr, -1, messageRect.Unwrap(), winapi.DT_CALCRECT)
 
 	const (

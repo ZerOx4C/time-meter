@@ -2,6 +2,7 @@ package main
 
 import (
 	"syscall"
+	"time-meter/wrapped"
 
 	"github.com/cwchiu/go-winapi"
 )
@@ -27,7 +28,7 @@ func (pm *PopupMenu) AppendStringItem(menuId MenuId, title string) {
 }
 
 func (pm *PopupMenu) Popup(hWnd winapi.HWND) {
-	var pos POINT
+	var pos wrapped.POINT
 	winapi.GetCursorPos(pos.Unwrap())
 	winapi.TrackPopupMenu(pm.hMenu, 0, pos.X, pos.Y, 0, hWnd, nil)
 }

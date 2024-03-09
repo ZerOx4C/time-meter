@@ -1,15 +1,10 @@
-package main
+package wrapped
 
 import (
 	"github.com/cwchiu/go-winapi"
 )
 
-type POINT winapi.POINT
 type RECT winapi.RECT
-
-func (p *POINT) Unwrap() *winapi.POINT {
-	return (*winapi.POINT)(p)
-}
 
 func (r *RECT) Unwrap() *winapi.RECT {
 	return (*winapi.RECT)(r)

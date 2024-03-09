@@ -5,6 +5,7 @@ import (
 	"syscall"
 	"time-meter/setting"
 	winapi2 "time-meter/winapi"
+	"time-meter/wrapped"
 	"unsafe"
 
 	"github.com/cwchiu/go-winapi"
@@ -14,8 +15,8 @@ type MeterWindow struct {
 	hInstance          winapi.HINSTANCE
 	hWnd               winapi.HWND
 	settings           *setting.Settings
-	bound              RECT
-	lastCursorPos      POINT
+	bound              wrapped.RECT
+	lastCursorPos      wrapped.POINT
 	lastMenuId         MenuId
 	onPaint            EventHandler
 	onMouseMove        EventHandler
@@ -115,16 +116,16 @@ func (mw *MeterWindow) updateLayout() {
 		winapi.SWP_NOACTIVATE)
 }
 
-func (mw *MeterWindow) getMonitorRectList() []RECT {
-	ret := []RECT{}
-	rectChan := make(chan RECT)
+func (mw *MeterWindow) getMonitorRectList() []wrapped.RECT {
+	ret := []wrapped.RECT{}
+	rectChan := make(chan wrapped.RECT)
 
 	go winapi2.EnumDisplayMonitors(0, nil, syscall.NewCallback(func(hMonitor winapi.HMONITOR) uintptr {
 		var info winapi.MONITORINFO
 		info.CbSize = uint32(unsafe.Sizeof(info))
 		winapi.GetMonitorInfo(hMonitor, &info)
 
-		rectChan <- (RECT)(info.RcWork)
+		rectChan <- (wrapped.RECT)(info.RcWork)
 
 		return 1
 	}), 0)
@@ -141,7 +142,7 @@ func (mw *MeterWindow) getMonitorRectList() []RECT {
 }
 
 func (mw *MeterWindow) watchMouse() {
-	var currentCursorPos POINT
+	var currentCursorPos wrapped.POINT
 	winapi.GetCursorPos(currentCursorPos.Unwrap())
 
 	isHit := mw.bound.Contains(currentCursorPos)

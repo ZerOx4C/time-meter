@@ -2,13 +2,14 @@ package main
 
 import (
 	winapi2 "time-meter/winapi"
+	"time-meter/wrapped"
 
 	"github.com/cwchiu/go-winapi"
 )
 
 type BackBuffer struct {
 	frontDc       winapi.HDC
-	clientRect    RECT
+	clientRect    wrapped.RECT
 	backDc        winapi.HDC
 	backBitmap    winapi.HBITMAP
 	oldBackBitmap winapi.HGDIOBJ
