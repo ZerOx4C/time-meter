@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"time"
+	"time-meter/setting"
 	"time-meter/textmap"
 
 	"github.com/cwchiu/go-winapi"
@@ -30,7 +31,7 @@ const SETTINGS_FILENAME = "settings.json"
 var embedTextJson []byte
 
 var textMap = textmap.New()
-var settings = new(Settings)
+var settings = new(setting.Settings)
 var fileWatcher = new(FileWatcher)
 var meterWindow = new(MeterWindow)
 var tipWindow = new(TipWindow)

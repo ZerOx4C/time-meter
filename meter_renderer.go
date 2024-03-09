@@ -2,12 +2,13 @@ package main
 
 import (
 	"time"
+	"time-meter/setting"
 
 	"github.com/cwchiu/go-winapi"
 )
 
 type MeterRenderer struct {
-	settings        *Settings
+	settings        *setting.Settings
 	tasks           []Task
 	width           int32
 	height          int32

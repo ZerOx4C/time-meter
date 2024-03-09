@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"syscall"
+	"time-meter/setting"
 	winapi2 "time-meter/winapi"
 	"unsafe"
 
@@ -12,7 +13,7 @@ import (
 type MeterWindow struct {
 	hInstance          winapi.HINSTANCE
 	hWnd               winapi.HWND
-	settings           *Settings
+	settings           *setting.Settings
 	bound              RECT
 	lastCursorPos      POINT
 	lastMenuId         MenuId

@@ -4,6 +4,7 @@ import (
 	"math"
 	"syscall"
 	"time"
+	"time-meter/setting"
 	"time-meter/textmap"
 
 	"github.com/cwchiu/go-winapi"
@@ -11,7 +12,7 @@ import (
 
 type TipRenderer struct {
 	textMap              textmap.TextMap
-	settings             *Settings
+	settings             *setting.Settings
 	tasks                []Task
 	errorMessage         string
 	backgroundBrush      winapi.HBRUSH

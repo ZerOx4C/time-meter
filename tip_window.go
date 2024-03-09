@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"syscall"
+	"time-meter/setting"
 	"unsafe"
 
 	"github.com/cwchiu/go-winapi"
@@ -11,7 +12,7 @@ import (
 type TipWindow struct {
 	hInstance winapi.HINSTANCE
 	hWnd      winapi.HWND
-	settings  *Settings
+	settings  *setting.Settings
 	boundLeft int32
 	onPaint   EventHandler
 }
