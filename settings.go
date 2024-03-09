@@ -25,6 +25,37 @@ type Settings struct {
 	TipTextColor        winapi.COLORREF
 }
 
+type ColorRefWrapper winapi.COLORREF
+type DurationMinute time.Duration
+
+func (crw *ColorRefWrapper) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("#%06x", *crw)), nil
+}
+
+func (crw *ColorRefWrapper) UnmarshalJSON(data []byte) error {
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+
+	_, err := fmt.Sscanf(str, "#%06x", crw)
+	return err
+}
+
+func (dm *DurationMinute) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%d", time.Duration(*dm)/time.Minute)), nil
+}
+
+func (dm *DurationMinute) UnmarshalJSON(data []byte) error {
+	var minutes time.Duration
+	if err := json.Unmarshal(data, &minutes); err != nil {
+		return err
+	}
+
+	*dm = DurationMinute(minutes * time.Minute)
+	return nil
+}
+
 func (s *Settings) Default() {
 	s.TargetDisplayIndex = 0
 	s.MeterWidth = 50
@@ -42,18 +73,18 @@ func (s *Settings) Default() {
 
 func (s *Settings) LoadFile(filename string) error {
 	var rawSettings struct {
-		TargetDisplayIndex    *int    `json:"target_display_index,omitempty"`
-		MeterWidth            *int    `json:"meter_width,omitempty"`
-		MeterOpacity          *byte   `json:"meter_opacity,omitempty"`
-		PastMinutes           *int    `json:"past_minutes,omitempty"`
-		FutureMinutes         *int    `json:"future_minutes,omitempty"`
-		ScaleIntervalMinutes  *int    `json:"scale_interval_minutes,omitempty"`
-		ScheduleEditCommand   *string `json:"schedule_edit_command,omitempty"`
-		BackgroundColorString *string `json:"background_color,omitempty"`
-		MainScaleColorString  *string `json:"main_scale_color,omitempty"`
-		SubScalesColorString  *string `json:"sub_scales_color,omitempty"`
-		ChartColorString      *string `json:"chart_color,omitempty"`
-		TipTextColorString    *string `json:"tip_text_color,omitempty"`
+		TargetDisplayIndex   *int             `json:"target_display_index,omitempty"`
+		MeterWidth           *int             `json:"meter_width,omitempty"`
+		MeterOpacity         *byte            `json:"meter_opacity,omitempty"`
+		PastMinutes          *DurationMinute  `json:"past_minutes,omitempty"`
+		FutureMinutes        *DurationMinute  `json:"future_minutes,omitempty"`
+		ScaleIntervalMinutes *DurationMinute  `json:"scale_interval_minutes,omitempty"`
+		ScheduleEditCommand  *string          `json:"schedule_edit_command,omitempty"`
+		BackgroundColor      *ColorRefWrapper `json:"background_color,omitempty"`
+		MainScaleColor       *ColorRefWrapper `json:"main_scale_color,omitempty"`
+		SubScalesColor       *ColorRefWrapper `json:"sub_scales_color,omitempty"`
+		ChartColor           *ColorRefWrapper `json:"chart_color,omitempty"`
+		TipTextColor         *ColorRefWrapper `json:"tip_text_color,omitempty"`
 	}
 
 	if jsonBytes, err := os.ReadFile(filename); err != nil {
@@ -63,59 +94,24 @@ func (s *Settings) LoadFile(filename string) error {
 		return err
 	}
 
-	if rawSettings.TargetDisplayIndex != nil {
-		s.TargetDisplayIndex = *rawSettings.TargetDisplayIndex
-	}
-
-	if rawSettings.MeterWidth != nil {
-		s.MeterWidth = *rawSettings.MeterWidth
-	}
-
-	if rawSettings.MeterOpacity != nil {
-		s.MeterOpacity = *rawSettings.MeterOpacity
-	}
-
-	if rawSettings.PastMinutes != nil {
-		s.PastDuration = time.Minute * time.Duration(*rawSettings.PastMinutes)
-	}
-
-	if rawSettings.FutureMinutes != nil {
-		s.FutureDuration = time.Minute * time.Duration(*rawSettings.FutureMinutes)
-	}
-
-	if rawSettings.ScaleIntervalMinutes != nil {
-		s.ScaleInterval = time.Minute * time.Duration(*rawSettings.ScaleIntervalMinutes)
-	}
-
-	if rawSettings.ScheduleEditCommand != nil {
-		s.ScheduleEditCommand = *rawSettings.ScheduleEditCommand
-	}
-
-	if rawSettings.BackgroundColorString != nil {
-		s.BackgroundColor = s.parseColorString(*rawSettings.BackgroundColorString)
-	}
-
-	if rawSettings.MainScaleColorString != nil {
-		s.MainScaleColor = s.parseColorString(*rawSettings.MainScaleColorString)
-	}
-
-	if rawSettings.SubScalesColorString != nil {
-		s.SubScalesColor = s.parseColorString(*rawSettings.SubScalesColorString)
-	}
-
-	if rawSettings.ChartColorString != nil {
-		s.ChartColor = s.parseColorString(*rawSettings.ChartColorString)
-	}
-
-	if rawSettings.TipTextColorString != nil {
-		s.TipTextColor = s.parseColorString(*rawSettings.TipTextColorString)
-	}
+	tryAssign(&s.TargetDisplayIndex, rawSettings.TargetDisplayIndex)
+	tryAssign(&s.MeterWidth, rawSettings.MeterWidth)
+	tryAssign(&s.MeterOpacity, rawSettings.MeterOpacity)
+	tryAssign(&s.PastDuration, (*time.Duration)(rawSettings.PastMinutes))
+	tryAssign(&s.FutureDuration, (*time.Duration)(rawSettings.FutureMinutes))
+	tryAssign(&s.ScaleInterval, (*time.Duration)(rawSettings.ScaleIntervalMinutes))
+	tryAssign(&s.ScheduleEditCommand, rawSettings.ScheduleEditCommand)
+	tryAssign(&s.BackgroundColor, (*winapi.COLORREF)(rawSettings.BackgroundColor))
+	tryAssign(&s.MainScaleColor, (*winapi.COLORREF)(rawSettings.MainScaleColor))
+	tryAssign(&s.SubScalesColor, (*winapi.COLORREF)(rawSettings.SubScalesColor))
+	tryAssign(&s.ChartColor, (*winapi.COLORREF)(rawSettings.ChartColor))
+	tryAssign(&s.TipTextColor, (*winapi.COLORREF)(rawSettings.TipTextColor))
 
 	return nil
 }
 
-func (s *Settings) parseColorString(colorString string) winapi.COLORREF {
-	var r, g, b int32
-	fmt.Sscanf(colorString, "#%02x%02x%02x", &r, &g, &b)
-	return winapi.RGB(r, g, b)
+func tryAssign[T any](d *T, s *T) {
+	if s != nil {
+		*d = *s
+	}
 }
