@@ -4,6 +4,7 @@ import (
 	"errors"
 	"syscall"
 	"time-meter/setting"
+	"time-meter/util"
 	"unsafe"
 
 	"github.com/cwchiu/go-winapi"
@@ -14,7 +15,7 @@ type TipWindow struct {
 	hWnd      winapi.HWND
 	settings  *setting.Settings
 	boundLeft int32
-	onPaint   EventHandler
+	onPaint   util.EventHandler
 }
 
 func (tw *TipWindow) Initialize() error {

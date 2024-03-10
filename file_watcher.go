@@ -2,6 +2,7 @@ package main
 
 import (
 	"path/filepath"
+	"time-meter/util"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -10,7 +11,7 @@ type FileWatcher struct {
 	watcher       *fsnotify.Watcher
 	filename      string
 	busy          bool
-	onFileChanged EventHandler
+	onFileChanged util.EventHandler
 }
 
 func (fw *FileWatcher) Initialize() error {

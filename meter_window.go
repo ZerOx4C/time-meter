@@ -4,6 +4,7 @@ import (
 	"errors"
 	"syscall"
 	"time-meter/setting"
+	"time-meter/util"
 	winapi2 "time-meter/winapi"
 	"time-meter/wrapped"
 	"unsafe"
@@ -18,12 +19,12 @@ type MeterWindow struct {
 	bound              wrapped.RECT
 	lastCursorPos      wrapped.POINT
 	lastMenuId         MenuId
-	onPaint            EventHandler
-	onMouseMove        EventHandler
-	onMouseEnter       EventHandler
-	onMouseLeave       EventHandler
-	onMouseRightClick  EventHandler
-	onPopupMenuCommand EventHandler
+	onPaint            util.EventHandler
+	onMouseMove        util.EventHandler
+	onMouseEnter       util.EventHandler
+	onMouseLeave       util.EventHandler
+	onMouseRightClick  util.EventHandler
+	onPopupMenuCommand util.EventHandler
 }
 
 const (
