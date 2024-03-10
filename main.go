@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -222,7 +221,7 @@ func handleEditSchedule() error {
 }
 
 func reloadSchedule() {
-	loadedTasks, err := loadTasks(SCHEDULE_FILENAME)
+	loadedTasks, err := logic.LoadTasksFromFile(SCHEDULE_FILENAME)
 	if err != nil {
 		tipRenderer.errorMessage = textMap.Of("NOTIFY_FAILED_SCHEDULE").
 			Set("filename", SCHEDULE_FILENAME).
@@ -241,37 +240,5 @@ func saveTemplateTasks(filename string) error {
 	task.Subject = textMap.Of("NOUN_SAMPLE_TASK").String()
 	task.BeginAt = time.Now().Truncate(time.Minute).Add(time.Minute * 3)
 	task.EndAt = task.BeginAt.Add(time.Hour)
-	return saveTasks(filename, []logic.Task{task})
-}
-
-func loadTasks(filename string) ([]logic.Task, error) {
-	ret := []logic.Task{}
-
-	if jsonBytes, err := os.ReadFile(filename); err != nil {
-		return nil, err
-
-	} else if err := json.NewDecoder(bytes.NewReader(jsonBytes)).Decode(&ret); err != nil {
-		return nil, err
-
-	} else {
-		return ret, nil
-	}
-}
-
-func saveTasks(filename string, tasks []logic.Task) error {
-	jsonBuffer := bytes.NewBuffer(nil)
-
-	encoder := json.NewEncoder(jsonBuffer)
-	encoder.SetIndent("", "\t")
-	encoder.SetEscapeHTML(false)
-
-	if err := encoder.Encode(tasks); err != nil {
-		return err
-
-	} else if err := os.WriteFile(filename, jsonBuffer.Bytes(), os.ModePerm); err != nil {
-		return err
-
-	} else {
-		return nil
-	}
+	return logic.SaveTasksFromFile(filename, []logic.Task{task})
 }
