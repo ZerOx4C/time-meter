@@ -10,17 +10,7 @@ import (
 	"time-meter/logic"
 	"time-meter/setting"
 	"time-meter/textmap"
-	"time-meter/wrapped"
-
-	"github.com/cwchiu/go-winapi"
-)
-
-type MenuId int16
-
-const (
-	MID_ZERO MenuId = iota
-	MID_EDIT_SCHEDULE
-	MID_QUIT
+	"time-meter/ui"
 )
 
 const SCHEDULE_FILENAME = "schedule.json"
@@ -31,13 +21,8 @@ var embedTextJson []byte
 
 var textMap = textmap.New()
 var settings = new(setting.Settings)
+var uiController = ui.NewController()
 var fileWatcher = new(FileWatcher)
-var meterWindow = new(MeterWindow)
-var tipWindow = new(TipWindow)
-var meterRenderer = new(MeterRenderer)
-var tipRenderer = new(TipRenderer)
-var contextMenu = new(PopupMenu)
-var tasks = []logic.Task{}
 
 func main() {
 	if err := run(); err != nil {
@@ -52,107 +37,39 @@ func run() error {
 		println(err.Error())
 	}
 
-	meterWindow.settings = settings
-	tipWindow.settings = settings
-	meterRenderer.settings = settings
-	tipRenderer.textMap = textMap
-	tipRenderer.settings = settings
+	uiController.SetTextMap(textMap)
+	uiController.SetSettings(settings)
 
 	if err := initialize(); err != nil {
 		return err
 	}
 	defer finalize()
 
-	contextMenu.AppendStringItem(MID_EDIT_SCHEDULE, textMap.Of("VERB_EDIT_SCHEDULE").String())
-	contextMenu.AppendStringItem(MID_QUIT, textMap.Of("VERB_QUIT").String())
-
 	fileWatcher.filename = SCHEDULE_FILENAME
 	fileWatcher.onFileChanged = func() {
 		reloadSchedule()
 	}
 
-	meterWindow.onPaint = func() {
-		meterRenderer.width = meterWindow.bound.Width()
-		meterRenderer.height = meterWindow.bound.Height()
-		meterRenderer.Draw(meterWindow.hWnd)
-	}
-
-	meterWindow.onMouseMove = func() {
-		var cursorPos wrapped.POINT
-		winapi.GetCursorPos(cursorPos.Unwrap())
-
-		focusRatio := 1 - float64(cursorPos.Y-meterWindow.bound.Top)/float64(meterWindow.bound.Height())
-		totalDuration := settings.FutureDuration + settings.PastDuration
-		focusAt := time.Now().Add(-settings.PastDuration + time.Duration(focusRatio*float64(totalDuration)))
-
-		var focusTasks []logic.Task
-		for _, task := range tasks {
-			if task.OverlapWith(focusAt, focusAt) {
-				focusTasks = append(focusTasks, task)
-			}
-		}
-
-		tipRenderer.tasks = focusTasks
-
-		if tipRenderer.errorMessage != "" {
-			// NOTE: workaround.
-			tipWindow.Show()
-
-		} else if 0 < len(focusTasks) {
-			tipWindow.Show()
-
-		} else {
-			tipWindow.Hide()
-		}
-
-		tipWindow.boundLeft = meterWindow.bound.Right
-		tipWindow.Update()
-	}
-
-	meterWindow.onMouseEnter = func() {
-		tipWindow.Show()
-	}
-
-	meterWindow.onMouseLeave = func() {
-		tipWindow.Hide()
-	}
-
-	meterWindow.onMouseRightClick = func() {
-		contextMenu.Popup(meterWindow.hWnd)
-	}
-
-	meterWindow.onPopupMenuCommand = func() {
-		switch meterWindow.lastMenuId {
-		case MID_EDIT_SCHEDULE:
-			if err := handleEditSchedule(); err != nil {
-				showErrorMessageBox(
-					meterWindow.hWnd,
-					textMap.Of("NOUN_TIME_METER").String(),
-					textMap.Of("NOTIFY_FAILED_OPERATION").
-						Set("detail", err.Error()).
-						String(),
-				)
-			}
-
-		case MID_QUIT:
-			winapi.SendMessage(meterWindow.hWnd, winapi.WM_CLOSE, 0, 0)
-		}
-	}
-
-	tipWindow.onPaint = func() {
-		tipRenderer.Draw(tipWindow.hWnd)
-	}
-
 	fileWatcher.Watch()
 
 	reloadSchedule()
-	meterWindow.Show()
 
-	var msg winapi.MSG
-	for winapi.GetMessage(&msg, 0, 0, 0) != 0 {
-		winapi.TranslateMessage(&msg)
-		winapi.DispatchMessage(&msg)
-	}
+	uiController.OnPopupMenuCommand(func(menuId ui.MenuId) {
+		switch menuId {
+		case ui.MID_EDIT_SCHEDULE:
+			if err := handleEditSchedule(); err != nil {
+				uiController.ShowErrorMessageBox(
+					textMap.Of("NOTIFY_FAILED_OPERATION").
+						Set("detail", err.Error()).
+						String())
+			}
+
+		case ui.MID_QUIT:
+			uiController.Quit()
+		}
+	})
+
+	uiController.Run()
 
 	return nil
 }
@@ -166,23 +83,7 @@ func initialize() error {
 		return err
 	}
 
-	if err := meterWindow.Initialize(); err != nil {
-		return err
-	}
-
-	if err := tipWindow.Initialize(); err != nil {
-		return err
-	}
-
-	if err := meterRenderer.Initialize(); err != nil {
-		return err
-	}
-
-	if err := tipRenderer.Initialize(); err != nil {
-		return err
-	}
-
-	if err := contextMenu.Initialize(); err != nil {
+	if err := uiController.Initialize(); err != nil {
 		return err
 	}
 
@@ -190,11 +91,7 @@ func initialize() error {
 }
 
 func finalize() {
-	contextMenu.Finalize()
-	tipRenderer.Finalize()
-	meterRenderer.Finalize()
-	tipWindow.Finalize()
-	meterWindow.Finalize()
+	uiController.Finalize()
 	fileWatcher.Finalize()
 }
 
@@ -223,16 +120,15 @@ func handleEditSchedule() error {
 func reloadSchedule() {
 	loadedTasks, err := logic.LoadTasksFromFile(SCHEDULE_FILENAME)
 	if err != nil {
-		tipRenderer.errorMessage = textMap.Of("NOTIFY_FAILED_SCHEDULE").
+		uiController.SetErrorMessage(textMap.Of("NOTIFY_FAILED_SCHEDULE").
 			Set("filename", SCHEDULE_FILENAME).
-			String()
+			String())
 		return
 	}
 
-	tasks = loadedTasks
-	meterRenderer.tasks = loadedTasks
+	uiController.SetTasks(loadedTasks)
 
-	tipRenderer.errorMessage = ""
+	uiController.SetErrorMessage("")
 }
 
 func saveTemplateTasks(filename string) error {

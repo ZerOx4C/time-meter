@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	winapi2 "time-meter/winapi"
