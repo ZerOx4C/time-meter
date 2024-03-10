@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"time-meter/setting"
 	"time-meter/textmap"
 	"time-meter/ui"
+	"time-meter/webapi"
 )
 
 const SCHEDULE_FILENAME = "schedule.json"
@@ -21,6 +23,7 @@ var embedTextJson []byte
 
 var textMap = textmap.New()
 var settings = new(setting.Settings)
+var webApi = webapi.New()
 var uiController = ui.NewController()
 var fileWatcher = new(FileWatcher)
 
@@ -50,7 +53,20 @@ func run() error {
 		reloadSchedule()
 	}
 
+	webApi.OnHandled(func(t webapi.RequestType) {
+		switch t {
+		case webapi.PostSchedule:
+			if err := logic.SaveTasksFromFile(SCHEDULE_FILENAME, webApi.PostedTasks()); err != nil {
+				println(err.Error())
+			}
+		}
+	})
+
 	fileWatcher.Watch()
+
+	mux := http.NewServeMux()
+	mux.Handle("/api", http.StripPrefix("/api", webApi))
+	go http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), mux)
 
 	reloadSchedule()
 

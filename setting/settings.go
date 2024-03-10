@@ -22,6 +22,7 @@ type Settings struct {
 	SubScalesColor      winapi.COLORREF
 	ChartColor          winapi.COLORREF
 	TipTextColor        winapi.COLORREF
+	Port                int
 }
 
 type nilableSettings struct {
@@ -37,6 +38,7 @@ type nilableSettings struct {
 	SubScalesColor       *colorHexString `json:"sub_scales_color,omitempty"`
 	ChartColor           *colorHexString `json:"chart_color,omitempty"`
 	TipTextColor         *colorHexString `json:"tip_text_color,omitempty"`
+	Port                 *int            `json:"port,omitempty"`
 }
 
 func (s *Settings) Default() {
@@ -52,6 +54,7 @@ func (s *Settings) Default() {
 	s.SubScalesColor = winapi.RGB(128, 128, 128)
 	s.ChartColor = winapi.RGB(255, 128, 0)
 	s.TipTextColor = winapi.RGB(255, 255, 255)
+	s.Port = 50000
 }
 
 func (s *Settings) LoadFile(filename string) error {
@@ -79,6 +82,7 @@ func (s *Settings) LoadFile(filename string) error {
 	assignIfNotNil(&settings.SubScalesColor, (*winapi.COLORREF)(nilable.SubScalesColor))
 	assignIfNotNil(&settings.ChartColor, (*winapi.COLORREF)(nilable.ChartColor))
 	assignIfNotNil(&settings.TipTextColor, (*winapi.COLORREF)(nilable.TipTextColor))
+	assignIfNotNil(&settings.Port, nilable.Port)
 
 	*s = settings
 
