@@ -2,6 +2,7 @@ package main
 
 import (
 	"time"
+	"time-meter/logic"
 	"time-meter/setting"
 	"time-meter/wrapped"
 
@@ -10,7 +11,7 @@ import (
 
 type MeterRenderer struct {
 	settings        *setting.Settings
-	tasks           []Task
+	tasks           []logic.Task
 	width           int32
 	height          int32
 	backgroundBrush winapi.HBRUSH
@@ -66,12 +67,12 @@ func (mr *MeterRenderer) Draw(hWnd winapi.HWND) {
 	winapi.EndPaint(hWnd, &paint)
 }
 
-func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC, tasks []Task, now time.Time, futureDuration, pastDuration time.Duration) {
+func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC, tasks []logic.Task, now time.Time, futureDuration, pastDuration time.Duration) {
 	chartBeginAt := now.Add(-pastDuration)
 	chartEndAt := now.Add(futureDuration)
 	totalSeconds := int32((futureDuration + pastDuration) / time.Second)
 
-	tracks := [][]Task{}
+	tracks := [][]logic.Task{}
 
 	for _, task := range tasks {
 		if !task.OverlapWith(chartBeginAt, chartEndAt) {
@@ -89,7 +90,7 @@ func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC, tasks []Task, now time.Ti
 		}
 
 		if !found {
-			tracks = append(tracks, []Task{task})
+			tracks = append(tracks, []logic.Task{task})
 		}
 	}
 
@@ -111,7 +112,7 @@ func (mr *MeterRenderer) drawAllCharts(hdc winapi.HDC, tasks []Task, now time.Ti
 	}
 }
 
-func (mr *MeterRenderer) isTaskConflict(tasks []Task, desiredTask Task) bool {
+func (mr *MeterRenderer) isTaskConflict(tasks []logic.Task, desiredTask logic.Task) bool {
 	for _, task := range tasks {
 		if task.OverlapWith(desiredTask.BeginAt, desiredTask.EndAt) {
 			return true

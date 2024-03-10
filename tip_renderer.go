@@ -4,6 +4,7 @@ import (
 	"math"
 	"syscall"
 	"time"
+	"time-meter/logic"
 	"time-meter/setting"
 	"time-meter/textmap"
 	"time-meter/wrapped"
@@ -14,7 +15,7 @@ import (
 type TipRenderer struct {
 	textMap              textmap.TextMap
 	settings             *setting.Settings
-	tasks                []Task
+	tasks                []logic.Task
 	errorMessage         string
 	backgroundBrush      winapi.HBRUSH
 	errorBackgroundBrush winapi.HBRUSH
@@ -60,7 +61,7 @@ func (tr *TipRenderer) Draw(hWnd winapi.HWND) {
 	winapi.EndPaint(hWnd, &paint)
 }
 
-func (tr *TipRenderer) drawAsTasks(hWnd winapi.HWND, hdc winapi.HDC, tasks []Task, tipTextColor winapi.COLORREF) {
+func (tr *TipRenderer) drawAsTasks(hWnd winapi.HWND, hdc winapi.HDC, tasks []logic.Task, tipTextColor winapi.COLORREF) {
 	var clientRect wrapped.RECT
 	winapi.GetClientRect(hWnd, clientRect.Unwrap())
 	winapi.FillRect(hdc, clientRect.Unwrap(), tr.backgroundBrush)
@@ -99,7 +100,7 @@ func (tr *TipRenderer) drawAsTasks(hWnd winapi.HWND, hdc winapi.HDC, tasks []Tas
 		winapi.SWP_NOACTIVATE|winapi.SWP_NOMOVE)
 }
 
-func (tr *TipRenderer) createSubjectText(sourceTasks []Task) string {
+func (tr *TipRenderer) createSubjectText(sourceTasks []logic.Task) string {
 	var ret string
 
 	for index, task := range sourceTasks {
@@ -113,7 +114,7 @@ func (tr *TipRenderer) createSubjectText(sourceTasks []Task) string {
 	return ret
 }
 
-func (tr *TipRenderer) createTimeText(sourceTasks []Task, now time.Time) string {
+func (tr *TipRenderer) createTimeText(sourceTasks []logic.Task, now time.Time) string {
 	var ret string
 
 	for index, task := range sourceTasks {

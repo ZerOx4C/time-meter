@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"time"
+	"time-meter/logic"
 	"time-meter/setting"
 	"time-meter/textmap"
 	"time-meter/wrapped"
@@ -37,7 +38,7 @@ var tipWindow = new(TipWindow)
 var meterRenderer = new(MeterRenderer)
 var tipRenderer = new(TipRenderer)
 var contextMenu = new(PopupMenu)
-var tasks = []Task{}
+var tasks = []logic.Task{}
 
 func main() {
 	if err := run(); err != nil {
@@ -85,7 +86,7 @@ func run() error {
 		totalDuration := settings.FutureDuration + settings.PastDuration
 		focusAt := time.Now().Add(-settings.PastDuration + time.Duration(focusRatio*float64(totalDuration)))
 
-		var focusTasks []Task
+		var focusTasks []logic.Task
 		for _, task := range tasks {
 			if task.OverlapWith(focusAt, focusAt) {
 				focusTasks = append(focusTasks, task)
@@ -236,15 +237,15 @@ func reloadSchedule() {
 }
 
 func saveTemplateTasks(filename string) error {
-	task := Task{}
+	task := logic.Task{}
 	task.Subject = textMap.Of("NOUN_SAMPLE_TASK").String()
 	task.BeginAt = time.Now().Truncate(time.Minute).Add(time.Minute * 3)
 	task.EndAt = task.BeginAt.Add(time.Hour)
-	return saveTasks(filename, []Task{task})
+	return saveTasks(filename, []logic.Task{task})
 }
 
-func loadTasks(filename string) ([]Task, error) {
-	ret := []Task{}
+func loadTasks(filename string) ([]logic.Task, error) {
+	ret := []logic.Task{}
 
 	if jsonBytes, err := os.ReadFile(filename); err != nil {
 		return nil, err
@@ -257,7 +258,7 @@ func loadTasks(filename string) ([]Task, error) {
 	}
 }
 
-func saveTasks(filename string, tasks []Task) error {
+func saveTasks(filename string, tasks []logic.Task) error {
 	jsonBuffer := bytes.NewBuffer(nil)
 
 	encoder := json.NewEncoder(jsonBuffer)
