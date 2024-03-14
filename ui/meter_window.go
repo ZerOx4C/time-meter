@@ -187,6 +187,9 @@ func (mw *MeterWindow) wndProc(hWnd winapi.HWND, msg uint32, wParam uintptr, lPa
 	case winapi.WM_DISPLAYCHANGE:
 		mw.updateLayout()
 
+	case winapi.WM_MOVE:
+		mw.updateLayout()
+
 	case winapi.WM_TIMER:
 		switch wParam {
 		case EID_UPDATE_CHART:
