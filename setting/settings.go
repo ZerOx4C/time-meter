@@ -23,6 +23,7 @@ type Settings struct {
 	ChartColor          winapi.COLORREF
 	TipTextColor        winapi.COLORREF
 	Port                int
+	ServerEnabled       bool
 }
 
 type nilableSettings struct {
@@ -39,6 +40,7 @@ type nilableSettings struct {
 	ChartColor           *colorHexString `json:"chart_color,omitempty"`
 	TipTextColor         *colorHexString `json:"tip_text_color,omitempty"`
 	Port                 *int            `json:"port,omitempty"`
+	ServerEnabled        *bool           `json:"server_enabled,omitempty"`
 }
 
 func (s *Settings) Default() {
@@ -55,6 +57,7 @@ func (s *Settings) Default() {
 	s.ChartColor = winapi.RGB(255, 128, 0)
 	s.TipTextColor = winapi.RGB(255, 255, 255)
 	s.Port = 50000
+	s.ServerEnabled = true
 }
 
 func (s *Settings) LoadFile(filename string) error {
@@ -83,6 +86,7 @@ func (s *Settings) LoadFile(filename string) error {
 	assignIfNotNil(&settings.ChartColor, (*winapi.COLORREF)(nilable.ChartColor))
 	assignIfNotNil(&settings.TipTextColor, (*winapi.COLORREF)(nilable.TipTextColor))
 	assignIfNotNil(&settings.Port, nilable.Port)
+	assignIfNotNil(&settings.ServerEnabled, nilable.ServerEnabled)
 
 	*s = settings
 

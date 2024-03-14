@@ -64,9 +64,11 @@ func run() error {
 
 	fileWatcher.Watch()
 
-	mux := http.NewServeMux()
-	mux.Handle("/api", http.StripPrefix("/api", webApi))
-	go http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), mux)
+	if settings.ServerEnabled {
+		mux := http.NewServeMux()
+		mux.Handle("/api", http.StripPrefix("/api", webApi))
+		go http.ListenAndServe(fmt.Sprintf(":%d", settings.Port), mux)
+	}
 
 	reloadSchedule()
 
